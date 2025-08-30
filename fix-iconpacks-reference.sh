@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# Actualizar el archivo del proyecto para incluir MahApps.Metro.IconPacks
+cat > src/DiskProtectorApp/DiskProtectorApp.csproj << 'PROJECTEOF'
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <FileVersion>1.0.0</FileVersion>
+    <Version>1.0.0</Version>
+    <!-- Habilitar targeting de Windows en Linux -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MahApps.Metro" Version="2.4.10" />
+    <PackageReference Include="MahApps.Metro.IconPacks" Version="4.11.0" />
+    <PackageReference Include="ControlzEx" Version="5.0.2" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
+    <PackageReference Include="System.Management" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\app.ico" />
+    <None Remove="Resources\shield-protected.png" />
+    <None Remove="Resources\shield-unprotected.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\app.ico" />
+    <Resource Include="Resources\shield-protected.png" />
+    <Resource Include="Resources\shield-unprotected.png" />
+  </ItemGroup>
+
+</Project>
+PROJECTEOF
+
+echo "Corrección aplicada exitosamente!"
+echo "Se ha agregado la referencia a MahApps.Metro.IconPacks"
+echo "Ahora puedes compilar el proyecto usando:"
+echo "dotnet restore src/DiskProtectorApp/DiskProtectorApp.csproj"
+echo "dotnet build src/DiskProtectorApp/DiskProtectorApp.csproj --configuration Release"
