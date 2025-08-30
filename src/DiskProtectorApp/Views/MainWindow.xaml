@@ -4,7 +4,6 @@
                       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
-                      xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                       mc:Ignorable="d"
                       Title="DiskProtectorApp" Height="600" Width="1000"
                       WindowStartupLocation="CenterScreen"
@@ -12,8 +11,7 @@
                       BorderThickness="1"
                       BorderBrush="{DynamicResource AccentColorBrush}"
                       Background="{DynamicResource MahApps.Brushes.ThemeBackground}"
-                      Foreground="{DynamicResource MahApps.Brushes.Text}"
-                      Icon="Resources/app.ico">
+                      Foreground="{DynamicResource MahApps.Brushes.Text}">
     
     <controls:MetroWindow.RightWindowCommands>
         <controls:WindowCommands>
