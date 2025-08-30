@@ -17,11 +17,14 @@ namespace DiskProtectorApp.Services
 
             foreach (var drive in DriveInfo.GetDrives())
             {
-                if (drive.DriveType != DriveType.Fixed || drive.DriveFormat != "NTFS")
-                    continue;
-
                 try
                 {
+                    // Solo procesar discos fijos con sistema de archivos NTFS
+                    if (drive.DriveType != DriveType.Fixed || drive.DriveFormat != "NTFS")
+                    {
+                        continue;
+                    }
+
                     var disk = new DiskInfo
                     {
                         DriveLetter = drive.Name,
@@ -38,13 +41,16 @@ namespace DiskProtectorApp.Services
                     if (drive.Name.Equals(systemDrive, StringComparison.OrdinalIgnoreCase))
                     {
                         disk.VolumeName += " (Sistema)";
+                        disk.IsSelectable = false;
+                        disk.ProtectionStatus = "No Elegible (disco de sistema)";
                     }
 
                     disks.Add(disk);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // Ignorar discos que no se pueden acceder
+                    // Loggear errores pero continuar con otros discos
+                    Console.WriteLine($"Error procesando disco {drive.Name}: {ex.Message}");
                 }
             }
 
@@ -65,10 +71,9 @@ namespace DiskProtectorApp.Services
                         return true;
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Si no podemos determinar el tipo, asumimos HDD
-                return false;
+                Console.WriteLine($"Error determinando tipo de disco para {driveName}: {ex.Message}");
             }
 
             return false;
@@ -87,7 +92,8 @@ namespace DiskProtectorApp.Services
                 foreach (FileSystemAccessRule rule in rules)
                 {
                     if (rule.IdentityReference.Value.Equals(currentUser, StringComparison.OrdinalIgnoreCase) &&
-                        rule.AccessControlType == AccessControlType.Deny)
+                        rule.AccessControlType == AccessControlType.Deny &&
+                        (rule.FileSystemRights & FileSystemRights.FullControl) == FileSystemRights.FullControl)
                     {
                         return true;
                     }
@@ -95,8 +101,9 @@ namespace DiskProtectorApp.Services
 
                 return false;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Error verificando protección de {drivePath}: {ex.Message}");
                 return false;
             }
         }
@@ -122,8 +129,9 @@ namespace DiskProtectorApp.Services
                 
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Error protegiendo disco {drivePath}: {ex.Message}");
                 return false;
             }
         }
@@ -142,7 +150,8 @@ namespace DiskProtectorApp.Services
                 foreach (FileSystemAccessRule rule in rules)
                 {
                     if (rule.IdentityReference.Value.Equals(currentUser, StringComparison.OrdinalIgnoreCase) &&
-                        rule.AccessControlType == AccessControlType.Deny)
+                        rule.AccessControlType == AccessControlType.Deny &&
+                        (rule.FileSystemRights & FileSystemRights.FullControl) == FileSystemRights.FullControl)
                     {
                         rulesToRemove.Add(rule);
                     }
@@ -156,8 +165,9 @@ namespace DiskProtectorApp.Services
                 directoryInfo.SetAccessControl(security);
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Error desprotegiendo disco {drivePath}: {ex.Message}");
                 return false;
             }
         }
