@@ -36,13 +36,22 @@ namespace DiskProtectorApp
                 }
 
                 LogMessage("Administrator privileges confirmed");
-                base.OnStartup(e);
+                
+                // Crear y mostrar la ventana principal
+                LogMessage("Creating main window...");
+                var mainWindow = new DiskProtectorApp.Views.MainWindow();
+                LogMessage("Main window created successfully");
+                
+                // Mostrar la ventana
+                mainWindow.Show();
+                LogMessage("Main window shown");
+                
                 LogMessage("Application startup completed");
             }
             catch (Exception ex)
             {
                 LogMessage($"Error during startup: {ex}");
-                MessageBox.Show($"Error al iniciar la aplicación:\n{ex.Message}", 
+                MessageBox.Show($"Error al iniciar la aplicación:\n{ex.Message}\n\n{ex.StackTrace}", 
                                 "Error de inicio", 
                                 MessageBoxButton.OK, 
                                 MessageBoxImage.Error);
