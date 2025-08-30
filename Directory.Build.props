@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <Company>Emigdio Alexey Jimenez Acosta</Company>
+    <Authors>Emigdio Alexey Jimenez Acosta</Authors>
+    <Product>DiskProtectorApp</Product>
+    <Copyright>Copyright © Emigdio Alexey Jimenez Acosta 2024</Copyright>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+</Project>
