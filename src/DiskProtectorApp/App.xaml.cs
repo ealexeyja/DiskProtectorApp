@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Security.Principal;
 using System.Windows;
 
@@ -7,27 +8,75 @@ namespace DiskProtectorApp
 {
     public partial class App : Application
     {
+        private string logPath;
+
         protected override void OnStartup(StartupEventArgs e)
         {
-            // Verificar si se está ejecutando como administrador
-            if (!IsRunningAsAdministrator())
+            // Configurar logging
+            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string logDirectory = Path.Combine(appDataPath, "DiskProtectorApp");
+            Directory.CreateDirectory(logDirectory);
+            logPath = Path.Combine(logDirectory, "app-debug.log");
+            
+            LogMessage("Application starting...");
+            
+            try
             {
-                MessageBox.Show("Esta aplicación requiere privilegios de administrador.\nPor favor, ejecútela como administrador.", 
-                                "Privilegios requeridos", 
-                                MessageBoxButton.OK, 
-                                MessageBoxImage.Warning);
-                Shutdown();
-                return;
-            }
+                // Verificar si se está ejecutando como administrador
+                LogMessage("Checking administrator privileges...");
+                if (!IsRunningAsAdministrator())
+                {
+                    LogMessage("Administrator privileges required - showing message");
+                    MessageBox.Show("Esta aplicación requiere privilegios de administrador.\nPor favor, ejecútela como administrador.", 
+                                    "Privilegios requeridos", 
+                                    MessageBoxButton.OK, 
+                                    MessageBoxImage.Warning);
+                    Shutdown();
+                    return;
+                }
 
-            base.OnStartup(e);
+                LogMessage("Administrator privileges confirmed");
+                base.OnStartup(e);
+                LogMessage("Application startup completed");
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"Error during startup: {ex}");
+                MessageBox.Show($"Error al iniciar la aplicación:\n{ex.Message}", 
+                                "Error de inicio", 
+                                MessageBoxButton.OK, 
+                                MessageBoxImage.Error);
+                Shutdown();
+            }
         }
 
         private bool IsRunningAsAdministrator()
         {
-            var identity = WindowsIdentity.GetCurrent();
-            var principal = new WindowsPrincipal(identity);
-            return principal.IsInRole(WindowsBuiltInRole.Administrator);
+            try
+            {
+                var identity = WindowsIdentity.GetCurrent();
+                var principal = new WindowsPrincipal(identity);
+                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"Error checking admin privileges: {ex}");
+                return false;
+            }
+        }
+
+        private void LogMessage(string message)
+        {
+            try
+            {
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                string logEntry = $"[{timestamp}] {message}";
+                File.AppendAllText(logPath, logEntry + Environment.NewLine);
+            }
+            catch
+            {
+                // Silenciar errores de logging
+            }
         }
     }
 }

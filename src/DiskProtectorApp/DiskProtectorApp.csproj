@@ -10,11 +10,14 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>false</SelfContained>
     <ApplicationIcon>Resources\app.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <FileVersion>1.0.0</FileVersion>
-    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.2</AssemblyVersion>
+    <FileVersion>1.0.2</FileVersion>
+    <Version>1.0.2</Version>
     <!-- Habilitar targeting de Windows en Linux -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- Configuración adicional para mejor diagnóstico -->
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>

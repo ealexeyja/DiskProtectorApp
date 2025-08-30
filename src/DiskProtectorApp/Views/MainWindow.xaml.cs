@@ -1,15 +1,41 @@
 using DiskProtectorApp.ViewModels;
 using MahApps.Metro.Controls;
+using System;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 
 namespace DiskProtectorApp.Views
 {
     public partial class MainWindow : MetroWindow
     {
+        private string logPath;
+
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new MainViewModel();
+            
+            // Configurar logging
+            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string logDirectory = Path.Combine(appDataPath, "DiskProtectorApp");
+            Directory.CreateDirectory(logDirectory);
+            logPath = Path.Combine(logDirectory, "app-debug.log");
+            
+            LogMessage("MainWindow constructor starting...");
+            
+            try
+            {
+                DataContext = new MainViewModel();
+                LogMessage("MainWindow initialized successfully");
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"Error initializing MainWindow: {ex}");
+                MessageBox.Show($"Error al inicializar la ventana principal:\n{ex.Message}", 
+                                "Error de inicialización", 
+                                MessageBoxButton.OK, 
+                                MessageBoxImage.Error);
+            }
         }
 
         private void HelpButton_Click(object sender, RoutedEventArgs e)
@@ -29,8 +55,8 @@ Aplicación para protección de discos mediante gestión de permisos NTFS.
 • Click derecho → ""Ejecutar como administrador""
 
 🔷 RUNTIME NECESARIO:
-• Microsoft .NET 6.0 Desktop Runtime x64
-• Descargar desde: https://dotnet.microsoft.com/download/dotnet/6.0  
+• Microsoft .NET 8.0 Desktop Runtime x64
+• Descargar desde: https://dotnet.microsoft.com/download/dotnet/8.0  
 
 🔷 SISTEMA OPERATIVO:
 • Windows 10/11 x64
@@ -48,6 +74,20 @@ INSTRUCCIONES DE USO:
 • Se conservan los últimos 30 días de registros";
 
             MessageBox.Show(helpText, "Ayuda de DiskProtectorApp", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void LogMessage(string message)
+        {
+            try
+            {
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                string logEntry = $"[{timestamp}] MainWindow: {message}";
+                File.AppendAllText(logPath, logEntry + Environment.NewLine);
+            }
+            catch
+            {
+                // Silenciar errores de logging
+            }
         }
     }
 }
