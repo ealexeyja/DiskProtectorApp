@@ -12,6 +12,9 @@ env:
 jobs:
   build-and-release:
     runs-on: windows-latest
+    permissions:
+      contents: write
+      packages: write
     
     steps:
     - name: Checkout code
@@ -42,3 +45,5 @@ jobs:
       with:
         files: ./DiskProtectorApp-${{ github.ref_name }}.tar.gz
         generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
