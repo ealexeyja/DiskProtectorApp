@@ -8,7 +8,7 @@ namespace DiskProtectorApp
 {
     public partial class App : Application
     {
-        private string logPath;
+        private string? logPath;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -69,9 +69,12 @@ namespace DiskProtectorApp
         {
             try
             {
-                string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                string logEntry = $"[{timestamp}] {message}";
-                File.AppendAllText(logPath, logEntry + Environment.NewLine);
+                if (logPath != null)
+                {
+                    string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                    string logEntry = $"[{timestamp}] {message}";
+                    File.AppendAllText(logPath, logEntry + Environment.NewLine);
+                }
             }
             catch
             {
