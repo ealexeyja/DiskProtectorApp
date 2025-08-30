@@ -30,13 +30,7 @@ jobs:
 
     - name: Publish application
       run: |
-        dotnet publish ${{ env.PROJECT_PATH }} \
-          -c Release \
-          -r win-x64 \
-          --self-contained false \
-          -o ./publish \
-          /p:DebugType=None \
-          /p:DebugSymbols=false
+        dotnet publish ${{ env.PROJECT_PATH }} -c Release -r win-x64 --self-contained false -o ./publish /p:DebugType=None /p:DebugSymbols=false
 
     - name: Create compressed archive
       run: |
