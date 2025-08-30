@@ -31,7 +31,7 @@ namespace DiskProtectorApp.Views
             catch (Exception ex)
             {
                 LogMessage($"Error initializing MainWindow: {ex}");
-                MessageBox.Show($"Error al inicializar la ventana principal:\n{ex.Message}", 
+                MessageBox.Show($"Error al inicializar la ventana principal:\n{ex.Message}\n\n{ex.StackTrace}", 
                                 "Error de inicialización", 
                                 MessageBoxButton.OK, 
                                 MessageBoxImage.Error);
@@ -88,6 +88,12 @@ INSTRUCCIONES DE USO:
             {
                 // Silenciar errores de logging
             }
+        }
+
+        protected override void OnContentRendered(EventArgs e)
+        {
+            base.OnContentRendered(e);
+            LogMessage("MainWindow content rendered");
         }
     }
 }
