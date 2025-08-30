@@ -3,6 +3,7 @@ using MahApps.Metro.Controls;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Windows;
 
 namespace DiskProtectorApp.Views
@@ -25,6 +26,13 @@ namespace DiskProtectorApp.Views
             
             try
             {
+                // Actualizar el título con la versión de la aplicación
+                var version = Assembly.GetExecutingAssembly().GetName().Version;
+                if (version != null)
+                {
+                    this.Title = $"DiskProtectorApp v{version.Major}.{version.Minor}.{version.Build}";
+                }
+                
                 DataContext = new MainViewModel();
                 LogMessage("MainWindow initialized successfully");
             }
@@ -40,7 +48,10 @@ namespace DiskProtectorApp.Views
 
         private void HelpButton_Click(object sender, RoutedEventArgs e)
         {
-            var helpText = @"INFORMACIÓN DEL DESARROLLADOR:
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            string versionText = version != null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "v1.0.9";
+            
+            var helpText = $@"INFORMACIÓN DEL DESARROLLADOR:
 - Nombre: Emigdio Alexey Jimenez Acosta
 - Email: ealexeyja@gmail.com
 - Teléfono: +53 5586 0259
@@ -71,7 +82,9 @@ INSTRUCCIONES DE USO:
 📝 REGISTRO DE OPERACIONES:
 • Todas las operaciones se registran en:
 • %APPDATA%\DiskProtectorApp\operations.log
-• Se conservan los últimos 30 días de registros";
+• Se conservan los últimos 30 días de registros
+
+ Versión actual: {versionText}";
 
             MessageBox.Show(helpText, "Ayuda de DiskProtectorApp", MessageBoxButton.OK, MessageBoxImage.Information);
         }

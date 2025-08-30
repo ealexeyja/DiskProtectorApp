@@ -6,7 +6,7 @@
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                       xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                       mc:Ignorable="d"
-                      Title="DiskProtectorApp" Height="600" Width="1000"
+                      Title="DiskProtectorApp v1.0.9" Height="600" Width="1000"
                       WindowStartupLocation="CenterScreen"
                       GlowBrush="{DynamicResource AccentColorBrush}"
                       BorderThickness="1"
@@ -73,9 +73,16 @@
                   Margin="10">
             
             <DataGrid.Columns>
-                <DataGridCheckBoxColumn Header="Seleccionar" 
-                                        Binding="{Binding IsSelected}" 
-                                        Width="Auto"/>
+                <DataGridTemplateColumn Header="Seleccionar" Width="Auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" 
+                                      IsEnabled="{Binding IsSelectable}"
+                                      HorizontalAlignment="Center" 
+                                      VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 
                 <DataGridTextColumn Header="Letra" 
                                     Binding="{Binding DriveLetter}" 
@@ -113,11 +120,24 @@
                                                 <DataTrigger Binding="{Binding IsProtected}" Value="True">
                                                     <Setter Property="Fill" Value="#4CAF50"/>
                                                 </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsSelectable}" Value="False">
+                                                    <Setter Property="Fill" Value="#9E9E9E"/>
+                                                </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Ellipse.Style>
                                 </Ellipse>
-                                <TextBlock Text="{Binding ProtectionStatus}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding ProtectionStatus}" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSelectable}" Value="False">
+                                                    <Setter Property="Foreground" Value="#9E9E9E"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

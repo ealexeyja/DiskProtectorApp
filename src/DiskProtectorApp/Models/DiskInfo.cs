@@ -6,6 +6,7 @@ namespace DiskProtectorApp.Models
     public class DiskInfo : INotifyPropertyChanged
     {
         private bool _isSelected;
+        private bool _isSelectable = true;
         private string? _driveLetter;
         private string? _volumeName;
         private string? _totalSize;
@@ -20,8 +21,26 @@ namespace DiskProtectorApp.Models
             get => _isSelected;
             set
             {
-                _isSelected = value;
+                if (_isSelectable)
+                {
+                    _isSelected = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool IsSelectable
+        {
+            get => _isSelectable;
+            set
+            {
+                _isSelectable = value;
                 OnPropertyChanged();
+                // Si no es seleccionable, deseleccionar
+                if (!value && _isSelected)
+                {
+                    IsSelected = false;
+                }
             }
         }
 

@@ -13,7 +13,7 @@ namespace DiskProtectorApp.ViewModels
         private readonly DiskService _diskService;
         private readonly OperationLogger _logger;
         private ObservableCollection<DiskInfo> _disks = new();
-        private string _statusMessage = string.Empty;
+        private string _statusMessage = "Listo";
         private bool _isWorking;
 
         public ObservableCollection<DiskInfo> Disks
@@ -43,6 +43,9 @@ namespace DiskProtectorApp.ViewModels
             {
                 _isWorking = value;
                 OnPropertyChanged();
+                // Notificar que los comandos pueden haber cambiado
+                ((RelayCommand)ProtectCommand).RaiseCanExecuteChanged();
+                ((RelayCommand)UnprotectCommand).RaiseCanExecuteChanged();
             }
         }
 
@@ -78,35 +81,41 @@ namespace DiskProtectorApp.ViewModels
             foreach (var disk in disks)
             {
                 Disks.Add(disk);
+                // Suscribirse al cambio de propiedad para actualizar comandos
+                disk.PropertyChanged += (sender, e) => {
+                    if (e.PropertyName == nameof(DiskInfo.IsSelected))
+                    {
+                        ((RelayCommand)ProtectCommand).RaiseCanExecuteChanged();
+                        ((RelayCommand)UnprotectCommand).RaiseCanExecuteChanged();
+                    }
+                };
             }
             
             StatusMessage = $"Se encontraron {disks.Count} discos";
             IsWorking = false;
+            
+            // Notificar que los comandos pueden haber cambiado
+            ((RelayCommand)ProtectCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)UnprotectCommand).RaiseCanExecuteChanged();
         }
 
         private bool CanPerformOperation(object? parameter)
         {
-            return !IsWorking && Disks.Any(d => d.IsSelected);
+            return !IsWorking && Disks.Any(d => d.IsSelected && d.IsSelectable);
         }
 
         private void ProtectSelectedDisks(object? parameter)
         {
-            var selectedDisks = Disks.Where(d => d.IsSelected).ToList();
+            var selectedDisks = Disks.Where(d => d.IsSelected && d.IsSelectable).ToList();
             if (!selectedDisks.Any()) return;
 
             IsWorking = true;
             StatusMessage = $"Protegiendo {selectedDisks.Count} disco(s)...";
 
             int successCount = 0;
+            
             foreach (var disk in selectedDisks)
             {
-                // No proteger el disco del sistema
-                if (disk.VolumeName != null && disk.VolumeName.Contains("(Sistema)"))
-                {
-                    _logger.LogOperation("Proteger", disk.DriveLetter ?? "Desconocido", false, "Intento de proteger disco del sistema");
-                    continue;
-                }
-
                 bool success = _diskService.ProtectDrive(disk.DriveLetter ?? "");
                 if (success)
                 {
@@ -122,11 +131,15 @@ namespace DiskProtectorApp.ViewModels
 
             StatusMessage = $"Protegidos {successCount} de {selectedDisks.Count} discos seleccionados";
             IsWorking = false;
+            
+            // Notificar que los comandos pueden haber cambiado
+            ((RelayCommand)ProtectCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)UnprotectCommand).RaiseCanExecuteChanged();
         }
 
         private void UnprotectSelectedDisks(object? parameter)
         {
-            var selectedDisks = Disks.Where(d => d.IsSelected).ToList();
+            var selectedDisks = Disks.Where(d => d.IsSelected && d.IsSelectable).ToList();
             if (!selectedDisks.Any()) return;
 
             IsWorking = true;
@@ -150,6 +163,10 @@ namespace DiskProtectorApp.ViewModels
 
             StatusMessage = $"Desprotegidos {successCount} de {selectedDisks.Count} discos seleccionados";
             IsWorking = false;
+            
+            // Notificar que los comandos pueden haber cambiado
+            ((RelayCommand)ProtectCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)UnprotectCommand).RaiseCanExecuteChanged();
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
