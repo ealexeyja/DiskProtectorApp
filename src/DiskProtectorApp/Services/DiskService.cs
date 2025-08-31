@@ -97,15 +97,17 @@ namespace DiskProtectorApp.Services
                 var security = directoryInfo.GetAccessControl();
                 var rules = security.GetAccessRules(true, true, typeof(NTAccount));
 
-                // Verificar si el usuario actual tiene acceso denegado
-                var currentUser = WindowsIdentity.GetCurrent().Name;
+                // Verificar si hay reglas que deniegan acceso a Usuarios
                 foreach (FileSystemAccessRule rule in rules)
                 {
-                    if (rule.IdentityReference.Value.Equals(currentUser, StringComparison.OrdinalIgnoreCase) &&
-                        rule.AccessControlType == AccessControlType.Deny &&
-                        (rule.FileSystemRights & FileSystemRights.FullControl) == FileSystemRights.FullControl)
+                    if (rule.IdentityReference.Value.Equals("Usuarios", StringComparison.OrdinalIgnoreCase) ||
+                        rule.IdentityReference.Value.Equals("Users", StringComparison.OrdinalIgnoreCase))
                     {
-                        return true;
+                        if (rule.AccessControlType == AccessControlType.Deny &&
+                            (rule.FileSystemRights & FileSystemRights.Modify) == FileSystemRights.Modify)
+                        {
+                            return true;
+                        }
                     }
                 }
 
@@ -128,20 +130,24 @@ namespace DiskProtectorApp.Services
                     progress?.Report("Obteniendo información del disco...");
                     var directoryInfo = new DirectoryInfo(drivePath);
                     
-                    progress?.Report("Verificando permisos actuales...");
+                    progress?.Report("Obteniendo permisos actuales...");
                     var security = directoryInfo.GetAccessControl();
                     
-                    progress?.Report("Agregando regla de denegación de acceso...");
-                    // Denegar acceso al usuario actual
-                    var currentUser = WindowsIdentity.GetCurrent();
-                    var rule = new FileSystemAccessRule(
-                        currentUser.Name,
-                        FileSystemRights.FullControl,
+                    progress?.Report("Verificando grupo de Usuarios...");
+                    // Obtener el SID del grupo de Usuarios
+                    var usersSid = new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null);
+                    var usersAccount = usersSid.Translate(typeof(NTAccount));
+                    
+                    progress?.Report($"Denegando permisos de modificación a {usersAccount.Value}...");
+                    // Denegar permisos de modificación a Usuarios (lectura/ejecución permitida)
+                    var denyRule = new FileSystemAccessRule(
+                        usersAccount,
+                        FileSystemRights.Modify, // Denegar modificar (incluye escritura, eliminación, etc.)
                         InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
                         PropagationFlags.None,
                         AccessControlType.Deny);
                     
-                    security.AddAccessRule(rule);
+                    security.AddAccessRule(denyRule);
                     
                     progress?.Report("Aplicando cambios de permisos...");
                     directoryInfo.SetAccessControl(security);
@@ -172,15 +178,17 @@ namespace DiskProtectorApp.Services
                     var security = directoryInfo.GetAccessControl();
                     var rules = security.GetAccessRules(true, true, typeof(NTAccount));
                     
-                    progress?.Report("Buscando reglas de denegación...");
-                    var currentUser = WindowsIdentity.GetCurrent().Name;
+                    progress?.Report("Buscando reglas de denegación para Usuarios...");
+                    var usersSid = new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null);
+                    var usersAccount = usersSid.Translate(typeof(NTAccount));
+                    
                     var rulesToRemove = new List<FileSystemAccessRule>();
                     
                     foreach (FileSystemAccessRule rule in rules)
                     {
-                        if (rule.IdentityReference.Value.Equals(currentUser, StringComparison.OrdinalIgnoreCase) &&
+                        if (rule.IdentityReference.Value.Equals(usersAccount.Value, StringComparison.OrdinalIgnoreCase) &&
                             rule.AccessControlType == AccessControlType.Deny &&
-                            (rule.FileSystemRights & FileSystemRights.FullControl) == FileSystemRights.FullControl)
+                            (rule.FileSystemRights & FileSystemRights.Modify) == FileSystemRights.Modify)
                         {
                             rulesToRemove.Add(rule);
                         }
