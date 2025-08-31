@@ -16,6 +16,7 @@ namespace DiskProtectorApp.Services
         private static readonly SecurityIdentifier BUILTIN_USERS_SID = new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null);
         private static readonly SecurityIdentifier BUILTIN_ADMINS_SID = new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null);
         private static readonly SecurityIdentifier LOCAL_SYSTEM_SID = new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null);
+        private static readonly SecurityIdentifier AUTHENTICATED_USERS_SID = new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null);
 
         public List<DiskInfo> GetDisks()
         {
@@ -96,7 +97,8 @@ namespace DiskProtectorApp.Services
         }
 
         /// <summary>
-        /// Detecta si un disco está protegido verificando si tiene una regla explícita que deniega Modify/Delete a Usuarios.
+        /// Detecta si un disco está protegido verificando si tiene permisos explícitos configurados
+        /// según nuestro esquema de protección.
         /// </summary>
         private bool IsDriveProtected(string drivePath)
         {
@@ -106,53 +108,78 @@ namespace DiskProtectorApp.Services
                 var security = directoryInfo.GetAccessControl();
                 var rules = security.GetAccessRules(true, true, typeof(IdentityReference));
 
-                // Buscar una regla explícita que deniega Modify o Delete a Usuarios
+                // Verificar si la herencia está desactivada
+                if (!security.AreAccessRulesProtected)
+                {
+                    return false; // Si la herencia está activa, no está protegido por nosotros
+                }
+
+                bool hasSystemFullControl = false;
+                bool hasAdminsFullControl = false;
+                bool hasAuthenticatedUsersRead = false;
+                bool hasUsersExplicit = false;
+
                 foreach (FileSystemAccessRule rule in rules)
                 {
-                    // Verificar si es una regla de denegación para el grupo de Usuarios
-                    if (rule.AccessControlType == AccessControlType.Deny)
+                    // Intentar obtener el SID del IdentityReference
+                    SecurityIdentifier sid = null;
+                    if (rule.IdentityReference is SecurityIdentifier)
                     {
-                        // Intentar obtener el SID del IdentityReference
-                        SecurityIdentifier sid = null;
-                        if (rule.IdentityReference is SecurityIdentifier)
+                        sid = (SecurityIdentifier)rule.IdentityReference;
+                    }
+                    else if (rule.IdentityReference is NTAccount)
+                    {
+                        try
                         {
-                            sid = (SecurityIdentifier)rule.IdentityReference;
+                            sid = (SecurityIdentifier)((NTAccount)rule.IdentityReference).Translate(typeof(SecurityIdentifier));
                         }
-                        else if (rule.IdentityReference is NTAccount)
+                        catch (Exception)
                         {
-                            try
-                            {
-                                sid = (SecurityIdentifier)((NTAccount)rule.IdentityReference).Translate(typeof(SecurityIdentifier));
-                            }
-                            catch (Exception)
-                            {
-                                // Si no se puede traducir, continuar
-                                continue;
-                            }
+                            // Si no se puede traducir, continuar
+                            continue;
+                        }
+                    }
+
+                    if (sid != null)
+                    {
+                        // Verificar permisos de SYSTEM
+                        if (sid == LOCAL_SYSTEM_SID &&
+                            rule.AccessControlType == AccessControlType.Allow &&
+                            rule.FileSystemRights == FileSystemRights.FullControl)
+                        {
+                            hasSystemFullControl = true;
                         }
 
-                        // Verificar si es el grupo de Usuarios y deniega Modify (que incluye Delete) o DeleteChild
-                        if (sid != null && sid == BUILTIN_USERS_SID)
+                        // Verificar permisos de Administradores
+                        if (sid == BUILTIN_ADMINS_SID &&
+                            rule.AccessControlType == AccessControlType.Allow &&
+                            rule.FileSystemRights == FileSystemRights.FullControl)
                         {
-                            // FileSystemRights.Modify incluye:
-                            // Delete, DeleteSubdirectoriesAndFiles, ChangePermissions, TakeOwnership, WriteAttributes, WriteData/Write
-                            // Por lo tanto, denegar Modify cubre eliminación y modificación
-                            if ((rule.FileSystemRights & FileSystemRights.Modify) == FileSystemRights.Modify)
-                            {
-                                return true;
-                            }
-                            
-                            // Como medida adicional, verificar DeleteChild específicamente
-                            if ((rule.FileSystemRights & FileSystemRights.Delete) == FileSystemRights.Delete ||
-                                (rule.FileSystemRights & FileSystemRights.DeleteSubdirectoriesAndFiles) == FileSystemRights.DeleteSubdirectoriesAndFiles)
-                            {
-                                return true;
-                            }
+                            hasAdminsFullControl = true;
+                        }
+
+                        // Verificar permisos de Usuarios autenticados (lectura)
+                        if (sid == AUTHENTICATED_USERS_SID &&
+                            rule.AccessControlType == AccessControlType.Allow &&
+                            (rule.FileSystemRights & (FileSystemRights.ReadAndExecute | FileSystemRights.ListDirectory)) == 
+                            (FileSystemRights.ReadAndExecute | FileSystemRights.ListDirectory))
+                        {
+                            hasAuthenticatedUsersRead = true;
+                        }
+
+                        // Verificar si hay permisos explícitos para Usuarios
+                        if (sid == BUILTIN_USERS_SID)
+                        {
+                            hasUsersExplicit = true;
                         }
                     }
                 }
 
-                return false;
+                // Un disco está protegido si:
+                // 1. Tiene herencia desactivada
+                // 2. Tiene permisos explícitos para SYSTEM, Admins y Authenticated Users
+                // 3. NO tiene permisos explícitos para Usuarios (o tiene solo lectura)
+                return hasSystemFullControl && hasAdminsFullControl && hasAuthenticatedUsersRead && !hasUsersExplicit;
             }
             catch (Exception ex)
             {
@@ -174,21 +201,57 @@ namespace DiskProtectorApp.Services
                     progress?.Report("Obteniendo permisos actuales...");
                     var security = directoryInfo.GetAccessControl();
                     
-                    progress?.Report("Verificando grupo de Usuarios...");
-                    // Obtener el grupo de Usuarios usando su SID
-                    var usersAccount = (NTAccount)BUILTIN_USERS_SID.Translate(typeof(NTAccount));
+                    progress?.Report("Desactivando herencia de permisos...");
+                    // Desactivar la herencia pero mantener las reglas existentes como reglas explícitas
+                    security.SetAccessRuleProtection(true, false); // true = disable inheritance, false = do not preserve inherited rules
                     
-                    progress?.Report($"Agregando regla de denegación de modificación/eliminación para {usersAccount.Value}...");
-                    // Crear una regla que deniega específicamente permisos de modificación (incluye Delete) a Usuarios
-                    // Modify incluye Delete, DeleteSubdirectoriesAndFiles, ChangePermissions, TakeOwnership, WriteAttributes, WriteData/Write
-                    var denyRule = new FileSystemAccessRule(
-                        usersAccount,
-                        FileSystemRights.Modify, // Denegar permisos de modificación (incluye eliminación)
+                    progress?.Report("Limpiando reglas de permisos existentes...");
+                    // Limpiar todas las reglas existentes para tener control total
+                    var allRules = security.GetAccessRules(true, true, typeof(IdentityReference));
+                    var rulesToRemove = allRules.Cast<AuthorizationRule>().ToList();
+                    foreach (FileSystemAccessRule rule in rulesToRemove)
+                    {
+                        security.RemoveAccessRule(rule);
+                    }
+                    
+                    progress?.Report("Configurando permisos explícitos...");
+                    
+                    // 1. SYSTEM - Control Total
+                    var systemAccount = (NTAccount)LOCAL_SYSTEM_SID.Translate(typeof(NTAccount));
+                    var systemRule = new FileSystemAccessRule(
+                        systemAccount,
+                        FileSystemRights.FullControl,
                         InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
                         PropagationFlags.None,
-                        AccessControlType.Deny);
+                        AccessControlType.Allow);
+                    security.AddAccessRule(systemRule);
+                    progress?.Report($"Agregado Control Total para {systemAccount.Value}");
                     
-                    security.AddAccessRule(denyRule);
+                    // 2. Administradores - Control Total
+                    var adminsAccount = (NTAccount)BUILTIN_ADMINS_SID.Translate(typeof(NTAccount));
+                    var adminRule = new FileSystemAccessRule(
+                        adminsAccount,
+                        FileSystemRights.FullControl,
+                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                        PropagationFlags.None,
+                        AccessControlType.Allow);
+                    security.AddAccessRule(adminRule);
+                    progress?.Report($"Agregado Control Total para {adminsAccount.Value}");
+                    
+                    // 3. Usuarios autenticados - Solo lectura y ejecución
+                    var authUsersAccount = (NTAccount)AUTHENTICATED_USERS_SID.Translate(typeof(NTAccount));
+                    var authUsersRule = new FileSystemAccessRule(
+                        authUsersAccount,
+                        FileSystemRights.ReadAndExecute | FileSystemRights.ListDirectory,
+                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                        PropagationFlags.None,
+                        AccessControlType.Allow);
+                    security.AddAccessRule(authUsersRule);
+                    progress?.Report($"Agregado Lectura/Ejecución para {authUsersAccount.Value}");
+                    
+                    // NOTA: NO agregamos permisos para el grupo "Usuarios"
+                    // Esto significa que los usuarios estándar no tendrán permisos explícitos
+                    // pero como también son "Usuarios autenticados", tendrán solo lectura
                     
                     progress?.Report("Aplicando cambios de permisos...");
                     directoryInfo.SetAccessControl(security);
@@ -217,35 +280,10 @@ namespace DiskProtectorApp.Services
                     
                     progress?.Report("Obteniendo permisos actuales...");
                     var security = directoryInfo.GetAccessControl();
-                    var rules = security.GetAccessRules(true, true, typeof(NTAccount));
                     
-                    progress?.Report("Buscando reglas de denegación para Usuarios...");
-                    // Obtener el grupo de Usuarios usando su SID
-                    var usersAccount = (NTAccount)BUILTIN_USERS_SID.Translate(typeof(NTAccount));
-                    
-                    var rulesToRemove = new List<FileSystemAccessRule>();
-                    
-                    // Buscar reglas que deniegan Modify o Delete a Usuarios
-                    foreach (FileSystemAccessRule rule in rules)
-                    {
-                        if (rule.IdentityReference.Value.Equals(usersAccount.Value, StringComparison.OrdinalIgnoreCase) &&
-                            rule.AccessControlType == AccessControlType.Deny)
-                        {
-                            // Remover cualquier regla de denegación para Usuarios
-                            if ((rule.FileSystemRights & FileSystemRights.Modify) == FileSystemRights.Modify ||
-                                (rule.FileSystemRights & FileSystemRights.Delete) == FileSystemRights.Delete ||
-                                (rule.FileSystemRights & FileSystemRights.DeleteSubdirectoriesAndFiles) == FileSystemRights.DeleteSubdirectoriesAndFiles)
-                            {
-                                rulesToRemove.Add(rule);
-                            }
-                        }
-                    }
-                    
-                    progress?.Report($"Removiendo {rulesToRemove.Count} reglas de denegación...");
-                    foreach (var rule in rulesToRemove)
-                    {
-                        security.RemoveAccessRule(rule);
-                    }
+                    progress?.Report("Reactivando herencia de permisos...");
+                    // Reactivar la herencia de permisos (esto restaurará los permisos predeterminados)
+                    security.SetAccessRuleProtection(false, false); // false = enable inheritance, false = do not preserve existing rules
                     
                     progress?.Report("Aplicando cambios de permisos...");
                     directoryInfo.SetAccessControl(security);
