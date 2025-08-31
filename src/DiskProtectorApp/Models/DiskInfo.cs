@@ -26,6 +26,7 @@ namespace DiskProtectorApp.Models
                 {
                     _isSelected = value;
                     OnPropertyChanged();
+                    System.Diagnostics.Debug.WriteLine($"Disk {_driveLetter}: IsSelected changed to {value}");
                 }
             }
         }
@@ -133,6 +134,7 @@ namespace DiskProtectorApp.Models
                 _isProtected = value;
                 ProtectionStatus = value ? "Protegido" : (_isSystemDisk ? "No Elegible" : "Desprotegido");
                 OnPropertyChanged();
+                System.Diagnostics.Debug.WriteLine($"Disk {_driveLetter}: IsProtected changed to {value}");
             }
         }
 

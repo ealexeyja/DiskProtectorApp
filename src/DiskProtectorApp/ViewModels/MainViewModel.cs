@@ -80,6 +80,7 @@ namespace DiskProtectorApp.ViewModels
             UnprotectCommand = new RelayCommand(UnprotectSelectedDisks, CanPerformUnprotectOperation);
             RefreshCommand = new RelayCommand(ExecuteRefreshDisks);
             
+            System.Diagnostics.Debug.WriteLine("MainViewModel initialized");
             RefreshDisks();
         }
 
@@ -88,16 +89,30 @@ namespace DiskProtectorApp.ViewModels
             if (e.PropertyName == nameof(DiskInfo.IsSelected) || 
                 e.PropertyName == nameof(DiskInfo.IsProtected))
             {
+                var disk = sender as DiskInfo;
+                System.Diagnostics.Debug.WriteLine($"Disk property changed: {disk?.DriveLetter} - {e.PropertyName}");
+                
                 // Usar Dispatcher para asegurar que la actualización ocurra en el hilo UI
-                System.Windows.Application.Current?.Dispatcher?.Invoke(() => {
+                if (System.Windows.Application.Current?.Dispatcher != null)
+                {
+                    System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                        UpdateCommandStates();
+                    });
+                }
+                else
+                {
                     UpdateCommandStates();
-                });
+                }
             }
         }
 
         private void UpdateCommandStates()
         {
-            // Forzar actualización de comandos usando el método correcto
+            System.Diagnostics.Debug.WriteLine("Updating command states");
+            System.Diagnostics.Debug.WriteLine($"Protect command can execute: {CanPerformProtectOperation(null)}");
+            System.Diagnostics.Debug.WriteLine($"Unprotect command can execute: {CanPerformUnprotectOperation(null)}");
+            
+            // Forzar actualización de comandos
             CommandManager.InvalidateRequerySuggested();
         }
 
@@ -138,12 +153,16 @@ namespace DiskProtectorApp.ViewModels
         private bool CanPerformProtectOperation(object? parameter)
         {
             bool canProtect = !IsWorking && Disks.Any(d => d.IsSelected && d.IsSelectable && !d.IsProtected);
+            int selectedCount = Disks.Count(d => d.IsSelected && d.IsSelectable && !d.IsProtected);
+            System.Diagnostics.Debug.WriteLine($"CanProtect check: IsWorking={IsWorking}, SelectedCount={selectedCount}, Result={canProtect}");
             return canProtect;
         }
 
         private bool CanPerformUnprotectOperation(object? parameter)
         {
             bool canUnprotect = !IsWorking && Disks.Any(d => d.IsSelected && d.IsSelectable && d.IsProtected);
+            int selectedCount = Disks.Count(d => d.IsSelected && d.IsSelectable && d.IsProtected);
+            System.Diagnostics.Debug.WriteLine($"CanUnprotect check: IsWorking={IsWorking}, SelectedCount={selectedCount}, Result={canUnprotect}");
             return canUnprotect;
         }
 
@@ -152,6 +171,8 @@ namespace DiskProtectorApp.ViewModels
             var selectedDisks = Disks.Where(d => d.IsSelected && d.IsSelectable && !d.IsProtected).ToList();
             if (!selectedDisks.Any()) return;
 
+            System.Diagnostics.Debug.WriteLine($"Protecting {selectedDisks.Count} disks");
+            
             IsWorking = true;
             StatusMessage = $"Protegiendo {selectedDisks.Count} disco(s)...";
 
@@ -165,10 +186,12 @@ namespace DiskProtectorApp.ViewModels
                     disk.IsProtected = true;
                     successCount++;
                     _logger.LogOperation("Proteger", disk.DriveLetter ?? "Desconocido", true);
+                    System.Diagnostics.Debug.WriteLine($"Successfully protected disk {disk.DriveLetter}");
                 }
                 else
                 {
                     _logger.LogOperation("Proteger", disk.DriveLetter ?? "Desconocido", false, "Error al aplicar permisos");
+                    System.Diagnostics.Debug.WriteLine($"Failed to protect disk {disk.DriveLetter}");
                 }
             }
 
@@ -184,6 +207,8 @@ namespace DiskProtectorApp.ViewModels
             var selectedDisks = Disks.Where(d => d.IsSelected && d.IsSelectable && d.IsProtected).ToList();
             if (!selectedDisks.Any()) return;
 
+            System.Diagnostics.Debug.WriteLine($"Unprotecting {selectedDisks.Count} disks");
+            
             IsWorking = true;
             StatusMessage = $"Desprotegiendo {selectedDisks.Count} disco(s)...";
 
@@ -196,10 +221,12 @@ namespace DiskProtectorApp.ViewModels
                     disk.IsProtected = false;
                     successCount++;
                     _logger.LogOperation("Desproteger", disk.DriveLetter ?? "Desconocido", true);
+                    System.Diagnostics.Debug.WriteLine($"Successfully unprotected disk {disk.DriveLetter}");
                 }
                 else
                 {
                     _logger.LogOperation("Desproteger", disk.DriveLetter ?? "Desconocido", false, "Error al remover permisos");
+                    System.Diagnostics.Debug.WriteLine($"Failed to unprotect disk {disk.DriveLetter}");
                 }
             }
 
