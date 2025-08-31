@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace DiskProtectorApp
@@ -6,11 +7,18 @@ namespace DiskProtectorApp
     public class RelayCommand : ICommand
     {
         private readonly Action<object?> _execute;
+        private readonly Func<object?, Task> _executeAsync;
         private readonly Predicate<object?>? _canExecute;
 
         public RelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null)
         {
             _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+            _canExecute = canExecute;
+        }
+
+        public RelayCommand(Func<object?, Task> executeAsync, Predicate<object?>? canExecute = null)
+        {
+            _executeAsync = executeAsync ?? throw new ArgumentNullException(nameof(executeAsync));
             _canExecute = canExecute;
         }
 
@@ -20,9 +28,16 @@ namespace DiskProtectorApp
             return result;
         }
 
-        public void Execute(object? parameter)
+        public async void Execute(object? parameter)
         {
-            _execute(parameter);
+            if (_executeAsync != null)
+            {
+                await _executeAsync(parameter);
+            }
+            else
+            {
+                _execute?.Invoke(parameter);
+            }
         }
 
         public event EventHandler? CanExecuteChanged

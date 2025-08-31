@@ -5,6 +5,7 @@ using System.IO;
 using System.Management;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Threading.Tasks;
 
 namespace DiskProtectorApp.Services
 {
@@ -57,7 +58,7 @@ namespace DiskProtectorApp.Services
                 catch (Exception ex)
                 {
                     // Loggear errores pero continuar con otros discos
-                    Console.WriteLine($"Error procesando disco {drive.Name}: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Error procesando disco {drive.Name}: {ex.Message}");
                 }
             }
 
@@ -80,7 +81,7 @@ namespace DiskProtectorApp.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error determinando tipo de disco para {driveName}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error determinando tipo de disco para {driveName}: {ex.Message}");
             }
 
             return false;
@@ -110,73 +111,96 @@ namespace DiskProtectorApp.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error verificando protección de {drivePath}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error verificando protección de {drivePath}: {ex.Message}");
                 return false;
             }
         }
 
-        public bool ProtectDrive(string drivePath)
+        public async Task<bool> ProtectDriveAsync(string drivePath, IProgress<string> progress)
         {
-            try
+            return await Task.Run(() =>
             {
-                var directoryInfo = new DirectoryInfo(drivePath);
-                var security = directoryInfo.GetAccessControl();
-                
-                // Denegar acceso al usuario actual
-                var currentUser = WindowsIdentity.GetCurrent();
-                var rule = new FileSystemAccessRule(
-                    currentUser.Name,
-                    FileSystemRights.FullControl,
-                    InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
-                    PropagationFlags.None,
-                    AccessControlType.Deny);
-                
-                security.AddAccessRule(rule);
-                directoryInfo.SetAccessControl(security);
-                
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error protegiendo disco {drivePath}: {ex.Message}");
-                return false;
-            }
-        }
-
-        public bool UnprotectDrive(string drivePath)
-        {
-            try
-            {
-                var directoryInfo = new DirectoryInfo(drivePath);
-                var security = directoryInfo.GetAccessControl();
-                var rules = security.GetAccessRules(true, true, typeof(NTAccount));
-                
-                var currentUser = WindowsIdentity.GetCurrent().Name;
-                var rulesToRemove = new List<FileSystemAccessRule>();
-                
-                foreach (FileSystemAccessRule rule in rules)
+                try
                 {
-                    if (rule.IdentityReference.Value.Equals(currentUser, StringComparison.OrdinalIgnoreCase) &&
-                        rule.AccessControlType == AccessControlType.Deny &&
-                        (rule.FileSystemRights & FileSystemRights.FullControl) == FileSystemRights.FullControl)
+                    progress?.Report("Obteniendo información del disco...");
+                    var directoryInfo = new DirectoryInfo(drivePath);
+                    
+                    progress?.Report("Obteniendo permisos actuales...");
+                    var security = directoryInfo.GetAccessControl();
+                    
+                    progress?.Report("Agregando regla de denegación...");
+                    // Denegar acceso al usuario actual
+                    var currentUser = WindowsIdentity.GetCurrent();
+                    var rule = new FileSystemAccessRule(
+                        currentUser.Name,
+                        FileSystemRights.FullControl,
+                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                        PropagationFlags.None,
+                        AccessControlType.Deny);
+                    
+                    security.AddAccessRule(rule);
+                    
+                    progress?.Report("Aplicando cambios de permisos...");
+                    directoryInfo.SetAccessControl(security);
+                    
+                    progress?.Report("Protección completada");
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error protegiendo disco {drivePath}: {ex.Message}");
+                    progress?.Report($"Error: {ex.Message}");
+                    return false;
+                }
+            });
+        }
+
+        public async Task<bool> UnprotectDriveAsync(string drivePath, IProgress<string> progress)
+        {
+            return await Task.Run(() =>
+            {
+                try
+                {
+                    progress?.Report("Obteniendo información del disco...");
+                    var directoryInfo = new DirectoryInfo(drivePath);
+                    
+                    progress?.Report("Obteniendo permisos actuales...");
+                    var security = directoryInfo.GetAccessControl();
+                    var rules = security.GetAccessRules(true, true, typeof(NTAccount));
+                    
+                    progress?.Report("Buscando reglas de denegación...");
+                    var currentUser = WindowsIdentity.GetCurrent().Name;
+                    var rulesToRemove = new List<FileSystemAccessRule>();
+                    
+                    foreach (FileSystemAccessRule rule in rules)
                     {
-                        rulesToRemove.Add(rule);
+                        if (rule.IdentityReference.Value.Equals(currentUser, StringComparison.OrdinalIgnoreCase) &&
+                            rule.AccessControlType == AccessControlType.Deny &&
+                            (rule.FileSystemRights & FileSystemRights.FullControl) == FileSystemRights.FullControl)
+                        {
+                            rulesToRemove.Add(rule);
+                        }
                     }
+                    
+                    progress?.Report($"Removiendo {rulesToRemove.Count} reglas de denegación...");
+                    foreach (var rule in rulesToRemove)
+                    {
+                        security.RemoveAccessRule(rule);
+                    }
+                    
+                    progress?.Report("Aplicando cambios de permisos...");
+                    directoryInfo.SetAccessControl(security);
+                    
+                    progress?.Report("Desprotección completada");
+                    return true;
                 }
-                
-                foreach (var rule in rulesToRemove)
+                catch (Exception ex)
                 {
-                    security.RemoveAccessRule(rule);
+                    System.Diagnostics.Debug.WriteLine($"Error desprotegiendo disco {drivePath}: {ex.Message}");
+                    progress?.Report($"Error: {ex.Message}");
+                    return false;
                 }
-                
-                directoryInfo.SetAccessControl(security);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error desprotegiendo disco {drivePath}: {ex.Message}");
-                return false;
-            }
+            });
         }
 
         private string FormatBytes(long bytes)
