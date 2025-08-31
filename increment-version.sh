@@ -1,17 +1,17 @@
 #!/bin/bash
 
-echo "=== DiskProtectorApp Version Increment Script ==="
+echo "=== Incrementando versión de DiskProtectorApp ==="
 
 # Verificar que estamos en el directorio correcto
 if [ ! -f "src/DiskProtectorApp/DiskProtectorApp.csproj" ]; then
-    echo "❌ Error: No se encontró el archivo de proyecto. Asegúrate de ejecutar este script desde la raíz del repositorio."
+    echo "❌ Error: No se encontró el archivo de proyecto."
     exit 1
 fi
 
 # Obtener la versión actual del proyecto
 CURRENT_VERSION=$(grep -o '<Version>[^<]*' src/DiskProtectorApp/DiskProtectorApp.csproj | cut -d'>' -f2)
 if [ -z "$CURRENT_VERSION" ]; then
-    CURRENT_VERSION="1.1.0"
+    CURRENT_VERSION="1.2.0"
 fi
 
 echo "🔢 Versión actual: v$CURRENT_VERSION"
@@ -37,7 +37,15 @@ sed -i "s/<InformationalVersion>$CURRENT_VERSION<\/InformationalVersion>/<Inform
 # Actualizar el título en MainWindow.xaml
 sed -i "s/Title=\"DiskProtectorApp v$CURRENT_VERSION\"/Title=\"DiskProtectorApp v$NEW_VERSION\"/g" src/DiskProtectorApp/Views/MainWindow.xaml
 
+# Actualizar versión en Directory.Build.props si existe
+if [ -f "Directory.Build.props" ]; then
+    sed -i "s/<Version>$CURRENT_VERSION<\/Version>/<Version>$NEW_VERSION<\/Version>/g" Directory.Build.props
+fi
+
 echo "✅ Versión actualizada de v$CURRENT_VERSION a v$NEW_VERSION"
 echo "   Archivos actualizados:"
 echo "   - src/DiskProtectorApp/DiskProtectorApp.csproj"
 echo "   - src/DiskProtectorApp/Views/MainWindow.xaml"
+if [ -f "Directory.Build.props" ]; then
+    echo "   - Directory.Build.props"
+fi
