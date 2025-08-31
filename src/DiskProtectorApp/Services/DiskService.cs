@@ -411,7 +411,7 @@ namespace DiskProtectorApp.Services
             }
         }
 
-        private bool VerifyAdminSystemPermissions(string drivePath, IProgress<string> progress)
+        private bool VerifyAdminSystemPermissions(string drivePath, IProgress<string>? progress)
         {
             try
             {
