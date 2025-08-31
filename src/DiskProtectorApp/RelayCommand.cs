@@ -6,8 +6,8 @@ namespace DiskProtectorApp
 {
     public class RelayCommand : ICommand
     {
-        private readonly Action<object?> _execute;
-        private readonly Func<object?, Task> _executeAsync;
+        private readonly Action<object?>? _execute;
+        private readonly Func<object?, Task>? _executeAsync;
         private readonly Predicate<object?>? _canExecute;
 
         public RelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null)
@@ -34,9 +34,9 @@ namespace DiskProtectorApp
             {
                 await _executeAsync(parameter);
             }
-            else
+            else if (_execute != null)
             {
-                _execute?.Invoke(parameter);
+                _execute(parameter);
             }
         }
 
