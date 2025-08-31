@@ -11,7 +11,7 @@ fi
 # Obtener la versión actual del proyecto
 CURRENT_VERSION=$(grep -o '<Version>[^<]*' src/DiskProtectorApp/DiskProtectorApp.csproj | cut -d'>' -f2)
 if [ -z "$CURRENT_VERSION" ]; then
-    CURRENT_VERSION="1.0.0"
+    CURRENT_VERSION="1.1.0"
 fi
 
 echo "🔢 Versión actual: v$CURRENT_VERSION"

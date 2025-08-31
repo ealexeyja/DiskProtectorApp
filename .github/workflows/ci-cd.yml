@@ -33,15 +33,42 @@ jobs:
         dotnet publish ${{ env.PROJECT_PATH }} -c Release -r win-x64 --self-contained false -o ./publish /p:DebugType=None /p:DebugSymbols=false
 
     - name: Organize files
+      shell: pwsh
       run: |
-        mkdir -p ./DiskProtectorApp-release/{libs,locales,config}
-        cp ./publish/DiskProtectorApp.exe ./DiskProtectorApp-release/
-        mv ./publish/*.dll ./DiskProtectorApp-release/libs/ 2>/dev/null || echo "No DLLs found"
-        if (Test-Path "./publish/en") { mv ./publish/en ./DiskProtectorApp-release/locales/ }
-        if (Test-Path "./publish/es") { mv ./publish/es ./DiskProtectorApp-release/locales/ }
-        if (Test-Path "./publish/de") { Remove-Item -Recurse -Force ./publish/de }
-        cp ./publish/*.json ./DiskProtectorApp-release/config/ 2>/dev/null || echo "No JSON files found"
-        cp ./publish/*.config ./DiskProtectorApp-release/config/ 2>/dev/null || echo "No config files found"
+        # Crear estructura de directorios usando comandos de PowerShell
+        New-Item -ItemType Directory -Path "./DiskProtectorApp-release" -Force
+        New-Item -ItemType Directory -Path "./DiskProtectorApp-release/libs" -Force
+        New-Item -ItemType Directory -Path "./DiskProtectorApp-release/locales" -Force
+        New-Item -ItemType Directory -Path "./DiskProtectorApp-release/config" -Force
+        
+        # Copiar el ejecutable principal
+        Copy-Item -Path "./publish/DiskProtectorApp.exe" -Destination "./DiskProtectorApp-release/" -Force
+        
+        # Mover DLLs a la carpeta libs
+        Get-ChildItem -Path "./publish" -Filter "*.dll" | ForEach-Object {
+            Move-Item -Path $_.FullName -Destination "./DiskProtectorApp-release/libs/" -Force
+        }
+        
+        # Mover recursos localizados (solo en/es)
+        if (Test-Path "./publish/en") {
+            Move-Item -Path "./publish/en" -Destination "./DiskProtectorApp-release/locales/" -Force
+        }
+        if (Test-Path "./publish/es") {
+            Move-Item -Path "./publish/es" -Destination "./DiskProtectorApp-release/locales/" -Force
+        }
+        
+        # Eliminar recursos alemanes si existen
+        if (Test-Path "./publish/de") {
+            Remove-Item -Path "./publish/de" -Recurse -Force
+        }
+        
+        # Copiar archivos de configuración
+        Get-ChildItem -Path "./publish" -Filter "*.json" | ForEach-Object {
+            Move-Item -Path $_.FullName -Destination "./DiskProtectorApp-release/config/" -Force
+        }
+        Get-ChildItem -Path "./publish" -Filter "*.config" | ForEach-Object {
+            Move-Item -Path $_.FullName -Destination "./DiskProtectorApp-release/config/" -Force
+        }
 
     - name: Create compressed archive
       run: |
