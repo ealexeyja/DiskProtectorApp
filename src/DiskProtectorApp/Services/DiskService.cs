@@ -100,14 +100,13 @@ namespace DiskProtectorApp.Services
                 // Verificar si hay reglas que deniegan acceso a Usuarios
                 foreach (FileSystemAccessRule rule in rules)
                 {
-                    if (rule.IdentityReference.Value.Equals("Usuarios", StringComparison.OrdinalIgnoreCase) ||
-                        rule.IdentityReference.Value.Equals("Users", StringComparison.OrdinalIgnoreCase))
+                    // Verificar tanto Usuarios en español como en inglés
+                    if ((rule.IdentityReference.Value.Equals("Usuarios", StringComparison.OrdinalIgnoreCase) ||
+                         rule.IdentityReference.Value.Equals("Users", StringComparison.OrdinalIgnoreCase)) &&
+                        rule.AccessControlType == AccessControlType.Deny &&
+                        (rule.FileSystemRights & FileSystemRights.Modify) == FileSystemRights.Modify)
                     {
-                        if (rule.AccessControlType == AccessControlType.Deny &&
-                            (rule.FileSystemRights & FileSystemRights.Modify) == FileSystemRights.Modify)
-                        {
-                            return true;
-                        }
+                        return true;
                     }
                 }
 
@@ -134,20 +133,34 @@ namespace DiskProtectorApp.Services
                     var security = directoryInfo.GetAccessControl();
                     
                     progress?.Report("Verificando grupo de Usuarios...");
-                    // Obtener el SID del grupo de Usuarios
+                    // Obtener el SID del grupo de Usuarios y traducirlo
                     var usersSid = new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null);
                     var usersAccount = usersSid.Translate(typeof(NTAccount));
                     
-                    progress?.Report($"Denegando permisos de modificación a {usersAccount.Value}...");
-                    // Denegar permisos de modificación a Usuarios (lectura/ejecución permitida)
+                    progress?.Report($"Denegando permisos de modificación solo a {usersAccount.Value}...");
+                    // Denegar SOLO permisos de modificación a Usuarios (lectura/ejecución permitida)
                     var denyRule = new FileSystemAccessRule(
                         usersAccount,
-                        FileSystemRights.Modify, // Denegar modificar (incluye escritura, eliminación, etc.)
+                        FileSystemRights.Modify, // Solo denegar modificar (incluye escritura, eliminación, etc.)
                         InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
                         PropagationFlags.None,
                         AccessControlType.Deny);
                     
                     security.AddAccessRule(denyRule);
+                    
+                    // Asegurar que los Administradores mantienen control total
+                    var adminsSid = new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null);
+                    var adminsAccount = adminsSid.Translate(typeof(NTAccount));
+                    progress?.Report($"Asegurando control total para {adminsAccount.Value}...");
+                    
+                    var adminRule = new FileSystemAccessRule(
+                        adminsAccount,
+                        FileSystemRights.FullControl,
+                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                        PropagationFlags.None,
+                        AccessControlType.Allow);
+                    
+                    security.SetAccessRule(adminRule);
                     
                     progress?.Report("Aplicando cambios de permisos...");
                     directoryInfo.SetAccessControl(security);
@@ -179,6 +192,7 @@ namespace DiskProtectorApp.Services
                     var rules = security.GetAccessRules(true, true, typeof(NTAccount));
                     
                     progress?.Report("Buscando reglas de denegación para Usuarios...");
+                    // Obtener el SID del grupo de Usuarios
                     var usersSid = new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null);
                     var usersAccount = usersSid.Translate(typeof(NTAccount));
                     
@@ -186,6 +200,7 @@ namespace DiskProtectorApp.Services
                     
                     foreach (FileSystemAccessRule rule in rules)
                     {
+                        // Solo remover reglas que deniegan permisos de modificación a Usuarios
                         if (rule.IdentityReference.Value.Equals(usersAccount.Value, StringComparison.OrdinalIgnoreCase) &&
                             rule.AccessControlType == AccessControlType.Deny &&
                             (rule.FileSystemRights & FileSystemRights.Modify) == FileSystemRights.Modify)
