@@ -12,9 +12,6 @@ env:
 jobs:
   build-and-release:
     runs-on: windows-latest
-    permissions:
-      contents: write
-      packages: write
     
     steps:
     - name: Checkout code
@@ -35,9 +32,20 @@ jobs:
       run: |
         dotnet publish ${{ env.PROJECT_PATH }} -c Release -r win-x64 --self-contained false -o ./publish /p:DebugType=None /p:DebugSymbols=false
 
+    - name: Organize files
+      run: |
+        mkdir -p ./DiskProtectorApp-release/{libs,locales,config}
+        cp ./publish/DiskProtectorApp.exe ./DiskProtectorApp-release/
+        mv ./publish/*.dll ./DiskProtectorApp-release/libs/ 2>/dev/null || echo "No DLLs found"
+        if (Test-Path "./publish/en") { mv ./publish/en ./DiskProtectorApp-release/locales/ }
+        if (Test-Path "./publish/es") { mv ./publish/es ./DiskProtectorApp-release/locales/ }
+        if (Test-Path "./publish/de") { Remove-Item -Recurse -Force ./publish/de }
+        cp ./publish/*.json ./DiskProtectorApp-release/config/ 2>/dev/null || echo "No JSON files found"
+        cp ./publish/*.config ./DiskProtectorApp-release/config/ 2>/dev/null || echo "No config files found"
+
     - name: Create compressed archive
       run: |
-        tar -czf ./DiskProtectorApp-${{ github.ref_name }}.tar.gz -C ./publish .
+        tar -czf ./DiskProtectorApp-${{ github.ref_name }}.tar.gz -C ./DiskProtectorApp-release .
 
     - name: Create GitHub Release
       if: startsWith(github.ref, 'refs/tags/')
