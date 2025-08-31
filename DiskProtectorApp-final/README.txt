@@ -1,4 +1,4 @@
-DiskProtectorApp v1.2.0
+DiskProtectorApp v1.2.1
 ========================
 
 Estructura de archivos (todos en el mismo directorio):
