@@ -40,3 +40,4 @@
 /workspaces/DiskProtectorApp/publish-test/MahApps.Metro.IconPacks.dll
 /workspaces/DiskProtectorApp/publish-test/Microsoft.Xaml.Behaviors.dll
 /workspaces/DiskProtectorApp/publish-test/System.Management.dll
+/workspaces/DiskProtectorApp/publish-test/de/MahApps.Metro.resources.dll
