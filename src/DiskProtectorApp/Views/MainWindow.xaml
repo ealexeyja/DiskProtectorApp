@@ -6,7 +6,7 @@
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                       xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                       mc:Ignorable="d"
-                      Title="DiskProtectorApp v1.1.8" Height="600" Width="1000"
+                      Title="DiskProtectorApp v1.2.0" Height="700" Width="1000"
                       WindowStartupLocation="CenterScreen"
                       GlowBrush="{DynamicResource AccentColorBrush}"
                       BorderThickness="1"
@@ -22,6 +22,7 @@
     
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
@@ -55,11 +56,40 @@
                         <TextBlock Margin="5,0,0,0" Text="Desproteger" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
+                
+                <Separator/>
+                
+                <Button Click="DiagnosticButton_Click" 
+                        ToolTip="Mostrar diagnóstico de discos seleccionados">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Bug" VerticalAlignment="Center"/>
+                        <TextBlock Margin="5,0,0,0" Text="Diagnóstico" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </ToolBar>
         </ToolBarTray>
         
+        <!-- Información de discos seleccionados -->
+        <Border Grid.Row="1" 
+                Background="{DynamicResource MahApps.Brushes.Gray10}" 
+                Padding="10,5" 
+                BorderBrush="{DynamicResource MahApps.Brushes.Gray8}" 
+                BorderThickness="0,0,0,1">
+            <StackPanel>
+                <TextBlock Text="{Binding SelectedDisksInfo}" 
+                           TextWrapping="Wrap" 
+                           FontSize="12"
+                           Foreground="{DynamicResource MahApps.Brushes.Text}"/>
+                <TextBlock Text="{Binding DiagnosticInfo}" 
+                           TextWrapping="Wrap" 
+                           FontSize="10"
+                           Foreground="{DynamicResource MahApps.Brushes.Gray3}"
+                           Margin="0,2,0,0"/>
+            </StackPanel>
+        </Border>
+        
         <!-- Lista de discos -->
-        <DataGrid Grid.Row="1" 
+        <DataGrid Grid.Row="2" 
                   ItemsSource="{Binding Disks}" 
                   AutoGenerateColumns="False"
                   CanUserAddRows="False"
@@ -79,7 +109,8 @@
                             <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" 
                                       IsEnabled="{Binding IsSelectable}"
                                       HorizontalAlignment="Center" 
-                                      VerticalAlignment="Center"/>
+                                      VerticalAlignment="Center"
+                                      Click="CheckBox_Click"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -146,7 +177,7 @@
         </DataGrid>
         
         <!-- Barra de estado -->
-        <StatusBar Grid.Row="2" Background="{DynamicResource MahApps.Brushes.Gray10}">
+        <StatusBar Grid.Row="3" Background="{DynamicResource MahApps.Brushes.Gray10}">
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
                     <controls:ProgressRing IsActive="{Binding IsWorking}" 

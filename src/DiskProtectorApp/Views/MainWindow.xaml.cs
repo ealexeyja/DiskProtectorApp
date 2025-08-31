@@ -3,8 +3,8 @@ using MahApps.Metro.Controls;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace DiskProtectorApp.Views
 {
@@ -27,7 +27,7 @@ namespace DiskProtectorApp.Views
             try
             {
                 // Actualizar el título con la versión de la aplicación
-                var version = Assembly.GetExecutingAssembly().GetName().Version;
+                var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
                 if (version != null)
                 {
                     this.Title = $"DiskProtectorApp v{version.Major}.{version.Minor}.{version.Build}";
@@ -48,8 +48,8 @@ namespace DiskProtectorApp.Views
 
         private void HelpButton_Click(object sender, RoutedEventArgs e)
         {
-            var version = Assembly.GetExecutingAssembly().GetName().Version;
-            string versionText = version != null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "v1.0.9";
+            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            string versionText = version != null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "v1.2.0";
             
             var helpText = $@"INFORMACIÓN DEL DESARROLLADOR:
 - Nombre: Emigdio Alexey Jimenez Acosta
@@ -94,8 +94,12 @@ INSTRUCCIONES DE USO:
             try
             {
                 string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                string logEntry = $"[{timestamp}] MainWindow: {message}";
+                string logEntry = $"[{timestamp}] {message}";
                 File.AppendAllText(logPath, logEntry + Environment.NewLine);
+                
+                // También escribir en la consola para debugging
+                Debug.WriteLine(logEntry);
+                Console.WriteLine(logEntry);
             }
             catch
             {
@@ -107,6 +111,27 @@ INSTRUCCIONES DE USO:
         {
             base.OnContentRendered(e);
             LogMessage("MainWindow content rendered");
+        }
+        
+        // Handler para diagnóstico de checkboxes
+        private void CheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            var checkBox = sender as CheckBox;
+            if (checkBox?.DataContext is Models.DiskInfo disk)
+            {
+                LogMessage($"[UI] CheckBox clicked for disk {disk.DriveLetter}. IsChecked: {checkBox.IsChecked}");
+                Debug.WriteLine($"[UI] CheckBox clicked for disk {disk.DriveLetter}. IsChecked: {checkBox.IsChecked}");
+                Console.WriteLine($"[UI] CheckBox clicked for disk {disk.DriveLetter}. IsChecked: {checkBox.IsChecked}");
+            }
+        }
+        
+        // Handler para botón de diagnóstico
+        private void DiagnosticButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ViewModels.MainViewModel viewModel)
+            {
+                viewModel.ShowDiagnosticInfo();
+            }
         }
     }
 }
