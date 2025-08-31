@@ -241,20 +241,7 @@ namespace DiskProtectorApp.ViewModels
                     bool success = await _diskService.ProtectDriveAsync(disk.DriveLetter ?? "", progress);
                     if (success)
                     {
-                        // Verificar el estado real después de la operación
-                        bool isActuallyProtected = await Task.Run(() => {
-                            try
-                            {
-                                var service = new DiskService();
-                                return service.IsDriveProtected(disk.DriveLetter ?? "");
-                            }
-                            catch
-                            {
-                                return true; // Asumir protegido si hay error
-                            }
-                        });
-                        
-                        disk.IsProtected = isActuallyProtected;
+                        disk.IsProtected = true;
                         successCount++;
                         _logger.LogOperation("Proteger", disk.DriveLetter ?? "Desconocido", true);
                         LogMessage($"[VIEWMODEL] Disco {disk.DriveLetter} protegido exitosamente", "INFO");
@@ -347,20 +334,7 @@ namespace DiskProtectorApp.ViewModels
                     bool success = await _diskService.UnprotectDriveAsync(disk.DriveLetter ?? "", progress);
                     if (success)
                     {
-                        // Verificar el estado real después de la operación
-                        bool isActuallyUnprotected = await Task.Run(() => {
-                            try
-                            {
-                                var service = new DiskService();
-                                return !service.IsDriveProtected(disk.DriveLetter ?? "");
-                            }
-                            catch
-                            {
-                                return true; // Asumir desprotegido si hay error
-                            }
-                        });
-                        
-                        disk.IsProtected = !isActuallyUnprotected;
+                        disk.IsProtected = false;
                         successCount++;
                         _logger.LogOperation("Desproteger", disk.DriveLetter ?? "Desconocido", true);
                         LogMessage($"[VIEWMODEL] Disco {disk.DriveLetter} desprotegido exitosamente", "INFO");

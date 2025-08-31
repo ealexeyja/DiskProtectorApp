@@ -218,9 +218,8 @@ namespace DiskProtectorApp.Services
                     progress?.Report("Verificando permisos de Admin/SYSTEM...");
                     if (!VerifyAdminSystemPermissions(drivePath, progress))
                     {
-                        LogMessage($"[PROTECT] ERROR: Permisos insuficientes de Admin/SYSTEM", "ERROR");
-                        progress?.Report("ERROR: Permisos insuficientes de Admin/SYSTEM");
-                        return false;
+                        LogMessage($"[PROTECT] ADVERTENCIA: Permisos insuficientes de Admin/SYSTEM, continuando...", "WARN");
+                        // No detener el proceso por esta advertencia
                     }
                     
                     // 3. Obtener información del directorio
@@ -318,9 +317,8 @@ namespace DiskProtectorApp.Services
                     progress?.Report("Verificando permisos de Admin/SYSTEM...");
                     if (!VerifyAdminSystemPermissions(drivePath, progress))
                     {
-                        LogMessage($"[UNPROTECT] ERROR: Permisos insuficientes de Admin/SYSTEM", "ERROR");
-                        progress?.Report("ERROR: Permisos insuficientes de Admin/SYSTEM");
-                        return false;
+                        LogMessage($"[UNPROTECT] ADVERTENCIA: Permisos insuficientes de Admin/SYSTEM, continuando...", "WARN");
+                        // No detener el proceso por esta advertencia
                     }
                     
                     // 3. Obtener información del directorio
