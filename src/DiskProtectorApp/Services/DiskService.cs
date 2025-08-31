@@ -59,6 +59,7 @@ namespace DiskProtectorApp.Services
                 {
                     // Loggear errores pero continuar con otros discos
                     System.Diagnostics.Debug.WriteLine($"Error procesando disco {drive.Name}: {ex.Message}");
+                    Console.WriteLine($"Error procesando disco {drive.Name}: {ex.Message}");
                 }
             }
 
@@ -82,6 +83,7 @@ namespace DiskProtectorApp.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error determinando tipo de disco para {driveName}: {ex.Message}");
+                Console.WriteLine($"Error determinando tipo de disco para {driveName}: {ex.Message}");
             }
 
             return false;
@@ -112,6 +114,7 @@ namespace DiskProtectorApp.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error verificando protección de {drivePath}: {ex.Message}");
+                Console.WriteLine($"Error verificando protección de {drivePath}: {ex.Message}");
                 return false;
             }
         }
@@ -125,10 +128,10 @@ namespace DiskProtectorApp.Services
                     progress?.Report("Obteniendo información del disco...");
                     var directoryInfo = new DirectoryInfo(drivePath);
                     
-                    progress?.Report("Obteniendo permisos actuales...");
+                    progress?.Report("Verificando permisos actuales...");
                     var security = directoryInfo.GetAccessControl();
                     
-                    progress?.Report("Agregando regla de denegación...");
+                    progress?.Report("Agregando regla de denegación de acceso...");
                     // Denegar acceso al usuario actual
                     var currentUser = WindowsIdentity.GetCurrent();
                     var rule = new FileSystemAccessRule(
@@ -143,12 +146,13 @@ namespace DiskProtectorApp.Services
                     progress?.Report("Aplicando cambios de permisos...");
                     directoryInfo.SetAccessControl(security);
                     
-                    progress?.Report("Protección completada");
+                    progress?.Report("Protección completada exitosamente");
                     return true;
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error protegiendo disco {drivePath}: {ex.Message}");
+                    Console.WriteLine($"Error protegiendo disco {drivePath}: {ex.Message}");
                     progress?.Report($"Error: {ex.Message}");
                     return false;
                 }
@@ -191,12 +195,13 @@ namespace DiskProtectorApp.Services
                     progress?.Report("Aplicando cambios de permisos...");
                     directoryInfo.SetAccessControl(security);
                     
-                    progress?.Report("Desprotección completada");
+                    progress?.Report("Desprotección completada exitosamente");
                     return true;
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error desprotegiendo disco {drivePath}: {ex.Message}");
+                    Console.WriteLine($"Error desprotegiendo disco {drivePath}: {ex.Message}");
                     progress?.Report($"Error: {ex.Message}");
                     return false;
                 }
