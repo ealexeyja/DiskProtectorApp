@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO; // Agregar esta directiva using
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -391,11 +392,11 @@ namespace DiskProtectorApp.ViewModels
                 
                 // Escribir en archivo de log
                 string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                string logDirectory = Path.Combine(appDataPath, "DiskProtectorApp");
-                Directory.CreateDirectory(logDirectory);
-                string logPath = Path.Combine(logDirectory, "viewmodel-debug.log");
+                string logDirectory = Path.Combine(appDataPath, "DiskProtectorApp"); // Corregido: usando Path.Combine
+                Directory.CreateDirectory(logDirectory); // Corregido: usando Directory
+                string logPath = Path.Combine(logDirectory, "viewmodel-debug.log"); // Corregido: usando Path.Combine
                 
-                File.AppendAllText(logPath, logEntry + Environment.NewLine);
+                File.AppendAllText(logPath, logEntry + Environment.NewLine); // Corregido: usando File
             }
             catch
             {
