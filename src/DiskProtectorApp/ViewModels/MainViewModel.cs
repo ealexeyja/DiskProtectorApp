@@ -76,8 +76,8 @@ namespace DiskProtectorApp.ViewModels
             _diskService = new DiskService();
             _logger = new OperationLogger();
             
-            ProtectCommand = new RelayCommand(ProtectSelectedDisks, CanPerformProtectOperation);
-            UnprotectCommand = new RelayCommand(UnprotectSelectedDisks, CanPerformUnprotectOperation);
+            ProtectCommand = new RelayCommand(ProtectSelectedDisks, CanAlwaysExecute);
+            UnprotectCommand = new RelayCommand(UnprotectSelectedDisks, CanAlwaysExecute);
             RefreshCommand = new RelayCommand(ExecuteRefreshDisks);
             
             System.Diagnostics.Debug.WriteLine("MainViewModel initialized");
@@ -109,11 +109,17 @@ namespace DiskProtectorApp.ViewModels
         private void UpdateCommandStates()
         {
             System.Diagnostics.Debug.WriteLine("Updating command states");
-            System.Diagnostics.Debug.WriteLine($"Protect command can execute: {CanPerformProtectOperation(null)}");
-            System.Diagnostics.Debug.WriteLine($"Unprotect command can execute: {CanPerformUnprotectOperation(null)}");
             
             // Forzar actualización de comandos
             CommandManager.InvalidateRequerySuggested();
+        }
+
+        private bool CanAlwaysExecute(object? parameter)
+        {
+            // Siempre retornar true para que los botones estén activos
+            bool canExecute = !IsWorking;
+            System.Diagnostics.Debug.WriteLine($"CanExecute check: IsWorking={IsWorking}, Result={canExecute}");
+            return canExecute;
         }
 
         private void ExecuteRefreshDisks(object? parameter)
@@ -150,25 +156,10 @@ namespace DiskProtectorApp.ViewModels
             UpdateCommandStates();
         }
 
-        private bool CanPerformProtectOperation(object? parameter)
-        {
-            bool canProtect = !IsWorking && Disks.Any(d => d.IsSelected && d.IsSelectable && !d.IsProtected);
-            int selectedCount = Disks.Count(d => d.IsSelected && d.IsSelectable && !d.IsProtected);
-            System.Diagnostics.Debug.WriteLine($"CanProtect check: IsWorking={IsWorking}, SelectedCount={selectedCount}, Result={canProtect}");
-            return canProtect;
-        }
-
-        private bool CanPerformUnprotectOperation(object? parameter)
-        {
-            bool canUnprotect = !IsWorking && Disks.Any(d => d.IsSelected && d.IsSelectable && d.IsProtected);
-            int selectedCount = Disks.Count(d => d.IsSelected && d.IsSelectable && d.IsProtected);
-            System.Diagnostics.Debug.WriteLine($"CanUnprotect check: IsWorking={IsWorking}, SelectedCount={selectedCount}, Result={canUnprotect}");
-            return canUnprotect;
-        }
-
         private void ProtectSelectedDisks(object? parameter)
         {
-            var selectedDisks = Disks.Where(d => d.IsSelected && d.IsSelectable && !d.IsProtected).ToList();
+            // Obtener todos los discos seleccionados, independientemente de su estado
+            var selectedDisks = Disks.Where(d => d.IsSelected && d.IsSelectable).ToList();
             if (!selectedDisks.Any()) return;
 
             System.Diagnostics.Debug.WriteLine($"Protecting {selectedDisks.Count} disks");
@@ -204,7 +195,8 @@ namespace DiskProtectorApp.ViewModels
 
         private void UnprotectSelectedDisks(object? parameter)
         {
-            var selectedDisks = Disks.Where(d => d.IsSelected && d.IsSelectable && d.IsProtected).ToList();
+            // Obtener todos los discos seleccionados, independientemente de su estado
+            var selectedDisks = Disks.Where(d => d.IsSelected && d.IsSelectable).ToList();
             if (!selectedDisks.Any()) return;
 
             System.Diagnostics.Debug.WriteLine($"Unprotecting {selectedDisks.Count} disks");
