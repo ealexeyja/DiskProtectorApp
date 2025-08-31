@@ -16,7 +16,8 @@ namespace DiskProtectorApp
 
         public bool CanExecute(object? parameter)
         {
-            return _canExecute?.Invoke(parameter) ?? true;
+            bool result = _canExecute?.Invoke(parameter) ?? true;
+            return result;
         }
 
         public void Execute(object? parameter)
