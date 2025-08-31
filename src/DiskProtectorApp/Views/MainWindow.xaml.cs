@@ -113,15 +113,39 @@ INSTRUCCIONES DE USO:
             LogMessage("MainWindow content rendered");
         }
         
-        // Handler para diagnóstico de checkboxes
+        // Handler para diagnóstico de checkboxes - FORZAR ACTUALIZACIÓN DEL MODELO
         private void CheckBox_Click(object sender, RoutedEventArgs e)
         {
             var checkBox = sender as CheckBox;
             if (checkBox?.DataContext is Models.DiskInfo disk)
             {
+                // Registrar el evento de UI
                 LogMessage($"[UI] CheckBox clicked for disk {disk.DriveLetter}. IsChecked: {checkBox.IsChecked}");
                 Debug.WriteLine($"[UI] CheckBox clicked for disk {disk.DriveLetter}. IsChecked: {checkBox.IsChecked}");
                 Console.WriteLine($"[UI] CheckBox clicked for disk {disk.DriveLetter}. IsChecked: {checkBox.IsChecked}");
+                
+                // FORZAR LA ACTUALIZACIÓN DEL MODELO: Establecer explícitamente la propiedad IsSelected
+                // Esto asegura que el setter del modelo se ejecute incluso si el binding TwoWay falla
+                bool newValue = checkBox.IsChecked ?? false;
+                if (disk.IsSelected != newValue)
+                {
+                    LogMessage($"[UI] Forcing IsSelected update for {disk.DriveLetter} to {newValue}");
+                    Debug.WriteLine($"[UI] Forcing IsSelected update for {disk.DriveLetter} to {newValue}");
+                    Console.WriteLine($"[UI] Forcing IsSelected update for {disk.DriveLetter} to {newValue}");
+                    disk.IsSelected = newValue; // Esto activará el setter del modelo y OnPropertyChanged
+                }
+                else
+                {
+                     LogMessage($"[UI] IsSelected for {disk.DriveLetter} already {newValue}, no update needed");
+                     Debug.WriteLine($"[UI] IsSelected for {disk.DriveLetter} already {newValue}, no update needed");
+                     Console.WriteLine($"[UI] IsSelected for {disk.DriveLetter} already {newValue}, no update needed");
+                }
+            }
+            else
+            {
+                LogMessage($"[UI] CheckBox clicked but DataContext is not DiskInfo. Type: {checkBox?.DataContext?.GetType().ToString() ?? "null"}");
+                Debug.WriteLine($"[UI] CheckBox clicked but DataContext is not DiskInfo. Type: {checkBox?.DataContext?.GetType().ToString() ?? "null"}");
+                Console.WriteLine($"[UI] CheckBox clicked but DataContext is not DiskInfo. Type: {checkBox?.DataContext?.GetType().ToString() ?? "null"}");
             }
         }
         
