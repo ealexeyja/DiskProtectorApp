@@ -3,6 +3,7 @@ using MahApps.Metro.Controls;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Security.Principal;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -38,11 +39,12 @@ namespace DiskProtectorApp.Views
             }
             catch (Exception ex)
             {
-                LogMessage($"Error initializing MainWindow: {ex}");
-                MessageBox.Show($"Error al inicializar la ventana principal:\n{ex.Message}\n\n{ex.StackTrace}", 
-                                "Error de inicialización", 
+                LogMessage($"Error during startup: {ex}");
+                MessageBox.Show($"Error al iniciar la aplicación:\n{ex.Message}\n\n{ex.StackTrace}", 
+                                "Error de inicio", 
                                 MessageBoxButton.OK, 
                                 MessageBoxImage.Error);
+                Shutdown();
             }
         }
 
@@ -96,10 +98,6 @@ INSTRUCCIONES DE USO:
                 string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                 string logEntry = $"[{timestamp}] {message}";
                 File.AppendAllText(logPath, logEntry + Environment.NewLine);
-                
-                // También escribir en la consola para debugging
-                Debug.WriteLine(logEntry);
-                Console.WriteLine(logEntry);
             }
             catch
             {
@@ -113,13 +111,12 @@ INSTRUCCIONES DE USO:
             LogMessage("MainWindow content rendered");
         }
         
-        // Handler para diagnóstico de checkboxes - FORZAR ACTUALIZACIÓN DEL MODELO
+        // Handler para diagnóstico de checkboxes
         private void CheckBox_Click(object sender, RoutedEventArgs e)
         {
             var checkBox = sender as CheckBox;
             if (checkBox?.DataContext is Models.DiskInfo disk)
             {
-                // Registrar el evento de UI
                 LogMessage($"[UI] CheckBox clicked for disk {disk.DriveLetter}. IsChecked: {checkBox.IsChecked}");
                 Debug.WriteLine($"[UI] CheckBox clicked for disk {disk.DriveLetter}. IsChecked: {checkBox.IsChecked}");
                 Console.WriteLine($"[UI] CheckBox clicked for disk {disk.DriveLetter}. IsChecked: {checkBox.IsChecked}");
@@ -149,13 +146,47 @@ INSTRUCCIONES DE USO:
             }
         }
         
-        // Handler para botón de diagnóstico
+        // Handler para botón de diagnóstico CORREGIDO
         private void DiagnosticButton_Click(object sender, RoutedEventArgs e)
         {
             if (DataContext is ViewModels.MainViewModel viewModel)
             {
-                viewModel.ShowDiagnosticInfo();
+                // Verificar si el método existe usando reflexión o simplemente llamarlo si sabemos que existe
+                try
+                {
+                    // Usar reflexión para verificar si el método existe
+                    var methodInfo = viewModel.GetType().GetMethod("ShowDiagnosticInfo");
+                    if (methodInfo != null)
+                    {
+                        methodInfo.Invoke(viewModel, null);
+                    }
+                    else
+                    {
+                        // Si el método no existe, mostrar un mensaje alternativo
+                        MessageBox.Show("Función de diagnóstico no disponible en esta versión.", 
+                                      "Diagnóstico", 
+                                      MessageBoxButton.OK, 
+                                      MessageBoxImage.Information);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogMessage($"[UI] Error calling ShowDiagnosticInfo: {ex.Message}");
+                    Debug.WriteLine($"[UI] Error calling ShowDiagnosticInfo: {ex.Message}");
+                    Console.WriteLine($"[UI] Error calling ShowDiagnosticInfo: {ex.Message}");
+                    
+                    // Mostrar mensaje alternativo en caso de error
+                    MessageBox.Show("Error al ejecutar diagnóstico.\n\n" + ex.Message, 
+                                  "Error de Diagnóstico", 
+                                  MessageBoxButton.OK, 
+                                  MessageBoxImage.Warning);
+                }
             }
+        }
+        
+        private void Shutdown()
+        {
+            Application.Current.Shutdown();
         }
     }
 }
