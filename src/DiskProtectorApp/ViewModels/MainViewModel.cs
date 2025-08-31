@@ -88,18 +88,17 @@ namespace DiskProtectorApp.ViewModels
             if (e.PropertyName == nameof(DiskInfo.IsSelected) || 
                 e.PropertyName == nameof(DiskInfo.IsProtected))
             {
-                UpdateCommandStates();
+                // Usar Dispatcher para asegurar que la actualización ocurra en el hilo UI
+                System.Windows.Application.Current?.Dispatcher?.Invoke(() => {
+                    UpdateCommandStates();
+                });
             }
         }
 
         private void UpdateCommandStates()
         {
-            // Forzar actualización de comandos
-            var protectCommand = ProtectCommand as RelayCommand;
-            var unprotectCommand = UnprotectCommand as RelayCommand;
-            
-            protectCommand?.RaiseCanExecuteChanged();
-            unprotectCommand?.RaiseCanExecuteChanged();
+            // Forzar actualización de comandos usando el método correcto
+            CommandManager.InvalidateRequerySuggested();
         }
 
         private void ExecuteRefreshDisks(object? parameter)
@@ -139,14 +138,12 @@ namespace DiskProtectorApp.ViewModels
         private bool CanPerformProtectOperation(object? parameter)
         {
             bool canProtect = !IsWorking && Disks.Any(d => d.IsSelected && d.IsSelectable && !d.IsProtected);
-            System.Diagnostics.Debug.WriteLine($"CanProtect: {canProtect}, IsWorking: {IsWorking}, SelectedCount: {Disks.Count(d => d.IsSelected && d.IsSelectable && !d.IsProtected)}");
             return canProtect;
         }
 
         private bool CanPerformUnprotectOperation(object? parameter)
         {
             bool canUnprotect = !IsWorking && Disks.Any(d => d.IsSelected && d.IsSelectable && d.IsProtected);
-            System.Diagnostics.Debug.WriteLine($"CanUnprotect: {canUnprotect}, IsWorking: {IsWorking}, SelectedCount: {Disks.Count(d => d.IsSelected && d.IsSelectable && d.IsProtected)}");
             return canUnprotect;
         }
 

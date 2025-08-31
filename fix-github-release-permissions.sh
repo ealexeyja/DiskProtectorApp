@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Corregir el pipeline CI/CD con permisos adecuados para GitHub Releases
+echo "=== Corrigiendo permisos del workflow de GitHub Actions ==="
+
+# Actualizar el workflow de GitHub Actions con permisos adecuados
 cat > .github/workflows/ci-cd.yml << 'WORKFLOWEOF'
 name: CI/CD Pipeline
 
@@ -39,9 +41,47 @@ jobs:
       run: |
         dotnet publish ${{ env.PROJECT_PATH }} -c Release -r win-x64 --self-contained false -o ./publish /p:DebugType=None /p:DebugSymbols=false
 
+    - name: Organize files
+      shell: pwsh
+      run: |
+        # Crear estructura de directorios usando comandos de PowerShell
+        New-Item -ItemType Directory -Path "./DiskProtectorApp-release" -Force
+        New-Item -ItemType Directory -Path "./DiskProtectorApp-release/libs" -Force
+        New-Item -ItemType Directory -Path "./DiskProtectorApp-release/locales" -Force
+        New-Item -ItemType Directory -Path "./DiskProtectorApp-release/config" -Force
+        
+        # Copiar el ejecutable principal
+        Copy-Item -Path "./publish/DiskProtectorApp.exe" -Destination "./DiskProtectorApp-release/" -Force
+        
+        # Mover DLLs a la carpeta libs
+        Get-ChildItem -Path "./publish" -Filter "*.dll" | ForEach-Object {
+            Move-Item -Path $_.FullName -Destination "./DiskProtectorApp-release/libs/" -Force
+        }
+        
+        # Mover recursos localizados (solo en/es)
+        if (Test-Path "./publish/en") {
+            Move-Item -Path "./publish/en" -Destination "./DiskProtectorApp-release/locales/" -Force
+        }
+        if (Test-Path "./publish/es") {
+            Move-Item -Path "./publish/es" -Destination "./DiskProtectorApp-release/locales/" -Force
+        }
+        
+        # Eliminar recursos alemanes si existen
+        if (Test-Path "./publish/de") {
+            Remove-Item -Path "./publish/de" -Recurse -Force
+        }
+        
+        # Copiar archivos de configuración
+        Get-ChildItem -Path "./publish" -Filter "*.json" | ForEach-Object {
+            Move-Item -Path $_.FullName -Destination "./DiskProtectorApp-release/config/" -Force
+        }
+        Get-ChildItem -Path "./publish" -Filter "*.config" | ForEach-Object {
+            Move-Item -Path $_.FullName -Destination "./DiskProtectorApp-release/config/" -Force
+        }
+
     - name: Create compressed archive
       run: |
-        tar -czf ./DiskProtectorApp-${{ github.ref_name }}.tar.gz -C ./publish .
+        tar -czf ./DiskProtectorApp-${{ github.ref_name }}.tar.gz -C ./DiskProtectorApp-release .
 
     - name: Create GitHub Release
       if: startsWith(github.ref, 'refs/tags/')
@@ -49,19 +89,23 @@ jobs:
       with:
         files: ./DiskProtectorApp-${{ github.ref_name }}.tar.gz
         generate_release_notes: true
+        draft: false
+        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 WORKFLOWEOF
 
-echo "Pipeline corregido exitosamente!"
-echo "Los cambios principales son:"
-echo "1. Agregados permisos explícitos: contents: write"
-echo "2. Agregada variable de entorno GITHUB_TOKEN"
+echo "✅ Workflow de GitHub Actions corregido con permisos adecuados"
+echo "   Cambios principales:"
+echo "   - Agregados permisos: contents: write, packages: write"
+echo "   - Agregadas opciones adicionales para el release"
+echo "   - Mantenido el token de autenticación"
+
 echo ""
 echo "Para aplicar los cambios y volver a intentar el release:"
 echo "1. git add .github/workflows/ci-cd.yml"
-echo "2. git commit -m \"fix: Agregar permisos para GitHub Releases\""
+echo "2. git commit -m \"fix: Corregir permisos para GitHub Releases\""
 echo "3. git push origin main"
-echo "4. Crear un nuevo tag para disparar el pipeline:"
-echo "   git tag -a v1.0.2 -m \"Release v1.0.2 con permisos corregidos\""
-echo "   git push origin v1.0.2"
+echo "4. Crear un nuevo tag para disparar el workflow corregido:"
+echo "   git tag -a v1.1.4 -m \"Release v1.1.4 con permisos corregidos\""
+echo "   git push origin v1.1.4"

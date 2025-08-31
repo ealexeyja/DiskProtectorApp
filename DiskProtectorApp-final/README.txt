@@ -1,13 +1,15 @@
-DiskProtectorApp v1.1.3
+DiskProtectorApp v1.2.0
 ========================
 
-Estructura de archivos:
+Estructura de archivos (todos en el mismo directorio):
 ├── DiskProtectorApp.exe     # Ejecutable principal
-├── libs/                    # Librerías y dependencias
-├── locales/                 # Recursos localizados
-│   ├── en/                  # Inglés
-│   └── es/                  # Español
-└── config/                  # Archivos de configuración
+├── *.dll                    # Librerías y dependencias
+├── en/                      # Recursos localizados (inglés)
+│   └── [archivos de recursos]
+├── es/                      # Recursos localizados (español)
+│   └── [archivos de recursos]
+├── *.json                   # Archivos de configuración
+└── *.config                 # Archivos de configuración
 
 Requisitos del sistema:
 - Windows 10/11 x64
