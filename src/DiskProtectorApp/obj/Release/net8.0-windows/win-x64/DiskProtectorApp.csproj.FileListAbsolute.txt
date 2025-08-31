@@ -52,7 +52,6 @@
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/bin/Release/net8.0-windows/win-x64/MahApps.Metro.IconPacks.dll
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/bin/Release/net8.0-windows/win-x64/Microsoft.Xaml.Behaviors.dll
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/bin/Release/net8.0-windows/win-x64/System.Management.dll
-/workspaces/DiskProtectorApp/src/DiskProtectorApp/bin/Release/net8.0-windows/win-x64/de/MahApps.Metro.resources.dll
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/DiskProt.F1AA4226.Up2Date
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/DiskProtectorApp.dll
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/refint/DiskProtectorApp.dll
