@@ -6,7 +6,7 @@
                       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
                       xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                       mc:Ignorable="d"
-                      Title="DiskProtectorApp v1.0.9" Height="600" Width="1000"
+                      Title="DiskProtectorApp v1.1.0" Height="600" Width="1000"
                       WindowStartupLocation="CenterScreen"
                       GlowBrush="{DynamicResource AccentColorBrush}"
                       BorderThickness="1"

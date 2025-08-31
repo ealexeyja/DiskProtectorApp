@@ -21,7 +21,7 @@ namespace DiskProtectorApp.Models
             get => _isSelected;
             set
             {
-                if (_isSelectable)
+                if (_isSelectable && _isSelected != value)
                 {
                     _isSelected = value;
                     OnPropertyChanged();
