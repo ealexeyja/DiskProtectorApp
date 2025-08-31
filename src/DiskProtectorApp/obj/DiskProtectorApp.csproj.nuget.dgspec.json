@@ -5,7 +5,7 @@
   },
   "projects": {
     "/workspaces/DiskProtectorApp/src/DiskProtectorApp/DiskProtectorApp.csproj": {
-      "version": "1.1.0",
+      "version": "1.1.3",
       "restore": {
         "projectUniqueName": "/workspaces/DiskProtectorApp/src/DiskProtectorApp/DiskProtectorApp.csproj",
         "projectName": "DiskProtectorApp",

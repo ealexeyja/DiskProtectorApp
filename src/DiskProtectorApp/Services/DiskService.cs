@@ -25,6 +25,8 @@ namespace DiskProtectorApp.Services
                         continue;
                     }
 
+                    bool isSystemDisk = drive.Name.Equals(systemDrive, StringComparison.OrdinalIgnoreCase);
+                    
                     var disk = new DiskInfo
                     {
                         DriveLetter = drive.Name,
@@ -34,15 +36,20 @@ namespace DiskProtectorApp.Services
                         FileSystem = drive.DriveFormat,
                         DiskType = IsSSD(drive.Name) ? "SSD" : "HDD",
                         IsProtected = IsDriveProtected(drive.RootDirectory.FullName),
-                        IsSelected = false
+                        IsSelected = false,
+                        IsSystemDisk = isSystemDisk,
+                        IsSelectable = !isSystemDisk
                     };
 
                     // Marcar el disco del sistema
-                    if (drive.Name.Equals(systemDrive, StringComparison.OrdinalIgnoreCase))
+                    if (isSystemDisk)
                     {
                         disk.VolumeName += " (Sistema)";
-                        disk.IsSelectable = false;
-                        disk.ProtectionStatus = "No Elegible (disco de sistema)";
+                        disk.ProtectionStatus = "No Elegible";
+                    }
+                    else
+                    {
+                        disk.ProtectionStatus = disk.IsProtected ? "Protegido" : "Desprotegido";
                     }
 
                     disks.Add(disk);

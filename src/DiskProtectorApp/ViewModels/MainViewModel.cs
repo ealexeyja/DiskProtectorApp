@@ -85,7 +85,8 @@ namespace DiskProtectorApp.ViewModels
 
         private void OnDiskPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(DiskInfo.IsSelected))
+            if (e.PropertyName == nameof(DiskInfo.IsSelected) || 
+                e.PropertyName == nameof(DiskInfo.IsProtected))
             {
                 UpdateCommandStates();
             }

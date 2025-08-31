@@ -15,6 +15,7 @@ namespace DiskProtectorApp.Models
         private string? _diskType;
         private string? _protectionStatus;
         private bool _isProtected;
+        private bool _isSystemDisk = false;
 
         public bool IsSelected
         {
@@ -41,6 +42,16 @@ namespace DiskProtectorApp.Models
                 {
                     IsSelected = false;
                 }
+            }
+        }
+
+        public bool IsSystemDisk
+        {
+            get => _isSystemDisk;
+            set
+            {
+                _isSystemDisk = value;
+                OnPropertyChanged();
             }
         }
 
@@ -120,7 +131,7 @@ namespace DiskProtectorApp.Models
             set
             {
                 _isProtected = value;
-                ProtectionStatus = value ? "Protegido" : "Desprotegido";
+                ProtectionStatus = value ? "Protegido" : (_isSystemDisk ? "No Elegible" : "Desprotegido");
                 OnPropertyChanged();
             }
         }
