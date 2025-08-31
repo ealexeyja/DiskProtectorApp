@@ -1,6 +1,6 @@
 using DiskProtectorApp.Models;
 using DiskProtectorApp.Services;
-using DiskProtectorApp.Views;  // Asegurarse de que esta referencia exista
+using DiskProtectorApp.Views;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -20,7 +20,6 @@ namespace DiskProtectorApp.ViewModels
         private ObservableCollection<DiskInfo> _disks = new();
         private string _statusMessage = "Listo";
         private string _selectedDisksInfo = "Discos seleccionados: Ninguno";
-        private string _diagnosticInfo = "";
         private bool _isWorking;
 
         public ObservableCollection<DiskInfo> Disks
@@ -28,21 +27,16 @@ namespace DiskProtectorApp.ViewModels
             get => _disks;
             set
             {
-                System.Diagnostics.Debug.WriteLine($"[VIEWMODEL] Setting Disks collection. Old count: {_disks?.Count ?? 0}, New count: {value?.Count ?? 0}");
-                Console.WriteLine($"[VIEWMODEL] Setting Disks collection. Old count: {_disks?.Count ?? 0}, New count: {value?.Count ?? 0}");
-                
                 // Desuscribirse de los eventos de los discos anteriores
                 if (_disks != null)
                 {
                     foreach (var disk in _disks)
                     {
                         disk.PropertyChanged -= OnDiskPropertyChanged;
-                        System.Diagnostics.Debug.WriteLine($"[VIEWMODEL] Unsubscribed from disk {disk.DriveLetter}");
-                        Console.WriteLine($"[VIEWMODEL] Unsubscribed from disk {disk.DriveLetter}");
                     }
                 }
                 
-                _disks = value ?? new ObservableCollection<DiskInfo>(); // Corrección CS8601: Asegurar que nunca sea null
+                _disks = value ?? new ObservableCollection<DiskInfo>();
                 
                 // Suscribirse a los eventos de los nuevos discos
                 if (_disks != null)
@@ -50,8 +44,6 @@ namespace DiskProtectorApp.ViewModels
                     foreach (var disk in _disks)
                     {
                         disk.PropertyChanged += OnDiskPropertyChanged;
-                        System.Diagnostics.Debug.WriteLine($"[VIEWMODEL] Subscribed to disk {disk.DriveLetter}");
-                        Console.WriteLine($"[VIEWMODEL] Subscribed to disk {disk.DriveLetter}");
                     }
                 }
                 
@@ -81,16 +73,6 @@ namespace DiskProtectorApp.ViewModels
             }
         }
 
-        public string DiagnosticInfo
-        {
-            get => _diagnosticInfo;
-            set
-            {
-                _diagnosticInfo = value ?? string.Empty;
-                OnPropertyChanged();
-            }
-        }
-
         public bool IsWorking
         {
             get => _isWorking;
@@ -115,8 +97,7 @@ namespace DiskProtectorApp.ViewModels
             UnprotectCommand = new RelayCommand(async (parameter) => await ExecuteUnprotectDisksAsync(), CanAlwaysExecute);
             RefreshCommand = new RelayCommand(ExecuteRefreshDisks);
             
-            System.Diagnostics.Debug.WriteLine("[VIEWMODEL] MainViewModel initialized");
-            Console.WriteLine("[VIEWMODEL] MainViewModel initialized");
+            LogMessage("[VIEWMODEL] MainViewModel inicializado", "INFO");
             RefreshDisks();
         }
 
@@ -126,26 +107,14 @@ namespace DiskProtectorApp.ViewModels
                 e.PropertyName == nameof(DiskInfo.IsProtected))
             {
                 var disk = sender as DiskInfo;
-                System.Diagnostics.Debug.WriteLine($"[VIEWMODEL] Disk property changed: {disk?.DriveLetter} - {e.PropertyName}");
-                Console.WriteLine($"[VIEWMODEL] Disk property changed: {disk?.DriveLetter} - {e.PropertyName}");
+                LogMessage($"[VIEWMODEL] Propiedad de disco cambiada: {disk?.DriveLetter} - {e.PropertyName}", "DEBUG");
                 
-                // Actualizar información de discos seleccionados cuando cambia IsSelected
                 if (e.PropertyName == nameof(DiskInfo.IsSelected))
                 {
                     UpdateSelectedDisksInfo();
                 }
                 
-                // Usar Dispatcher para asegurar que la actualización ocurra en el hilo UI
-                if (System.Windows.Application.Current?.Dispatcher != null)
-                {
-                    System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                        UpdateCommandStates();
-                    });
-                }
-                else
-                {
-                    UpdateCommandStates();
-                }
+                UpdateCommandStates();
             }
         }
 
@@ -158,8 +127,7 @@ namespace DiskProtectorApp.ViewModels
             }
             
             var selectedDisks = _disks.Where(d => d.IsSelected).ToList();
-            System.Diagnostics.Debug.WriteLine($"[VIEWMODEL] Updating selected disks info. Count: {selectedDisks.Count}");
-            Console.WriteLine($"[VIEWMODEL] Updating selected disks info. Count: {selectedDisks.Count}");
+            LogMessage($"[VIEWMODEL] Actualizando info de discos seleccionados: {selectedDisks.Count}", "DEBUG");
             
             if (selectedDisks.Count == 0)
             {
@@ -169,26 +137,19 @@ namespace DiskProtectorApp.ViewModels
             {
                 var diskList = string.Join(", ", selectedDisks.Select(d => $"{d.DriveLetter} ({d.VolumeName})"));
                 SelectedDisksInfo = $"Discos seleccionados ({selectedDisks.Count}): {diskList}";
-                System.Diagnostics.Debug.WriteLine($"[VIEWMODEL] Selected disks: {diskList}");
-                Console.WriteLine($"[VIEWMODEL] Selected disks: {diskList}");
             }
         }
 
         private void UpdateCommandStates()
         {
-            System.Diagnostics.Debug.WriteLine("[VIEWMODEL] Updating command states");
-            Console.WriteLine("[VIEWMODEL] Updating command states");
-            
-            // Forzar actualización de comandos
+            LogMessage("[VIEWMODEL] Actualizando estados de comandos", "DEBUG");
             CommandManager.InvalidateRequerySuggested();
         }
 
         private bool CanAlwaysExecute(object? parameter)
         {
-            // Siempre retornar true para que los botones estén activos (modo prueba)
             bool canExecute = !IsWorking;
-            System.Diagnostics.Debug.WriteLine($"[VIEWMODEL] CanExecute check: IsWorking={IsWorking}, Result={canExecute}");
-            Console.WriteLine($"[VIEWMODEL] CanExecute check: IsWorking={IsWorking}, Result={canExecute}");
+            LogMessage($"[VIEWMODEL] CanAlwaysExecute: IsWorking={IsWorking}, Result={canExecute}", "DEBUG");
             return canExecute;
         }
 
@@ -199,10 +160,12 @@ namespace DiskProtectorApp.ViewModels
 
         private void RefreshDisks()
         {
+            LogMessage("[VIEWMODEL] Iniciando refresco de discos", "INFO");
             IsWorking = true;
             StatusMessage = "Actualizando lista de discos...";
             
             var disks = _diskService.GetDisks();
+            LogMessage($"[VIEWMODEL] Discos obtenidos del servicio: {disks.Count}", "INFO");
             
             // Desuscribirse de los eventos de los discos anteriores
             foreach (var disk in _disks)
@@ -215,31 +178,35 @@ namespace DiskProtectorApp.ViewModels
             foreach (var disk in disks)
             {
                 Disks.Add(disk);
-                // Suscribirse al cambio de propiedad para actualizar comandos
                 disk.PropertyChanged += OnDiskPropertyChanged;
+                LogMessage($"[VIEWMODEL] Disco agregado: {disk.DriveLetter} - Protegido: {disk.IsProtected}", "DEBUG");
             }
             
             StatusMessage = $"Se encontraron {disks.Count} discos";
             IsWorking = false;
             
-            // Actualizar información de discos seleccionados
             UpdateSelectedDisksInfo();
-            
-            // Actualizar estado de los comandos
             UpdateCommandStates();
+            LogMessage("[VIEWMODEL] Refresco de discos completado", "INFO");
         }
 
         private async Task ExecuteProtectDisksAsync()
         {
+            LogMessage("[VIEWMODEL] Iniciando protección de discos", "INFO");
             var selectedDisks = _disks?.Where(d => d.IsSelected && d.IsSelectable && !d.IsProtected).ToList() ?? new List<DiskInfo>();
-            if (!selectedDisks.Any()) return;
-
-            System.Diagnostics.Debug.WriteLine($"[VIEWMODEL] Protecting {selectedDisks.Count} disks");
-            Console.WriteLine($"[VIEWMODEL] Protecting {selectedDisks.Count} disks");
             
-            IsWorking = true;
-            StatusMessage = $"Protegiendo {selectedDisks.Count} disco(s)...";
-
+            if (selectedDisks.Count == 0)
+            {
+                LogMessage("[VIEWMODEL] No hay discos seleccionados para proteger", "WARN");
+                MessageBox.Show("No hay discos seleccionados para proteger.\n\nPor favor, seleccione al menos un disco no protegido.", 
+                              "Protección de discos", 
+                              MessageBoxButton.OK, 
+                              MessageBoxImage.Information);
+                return;
+            }
+            
+            LogMessage($"[VIEWMODEL] Discos seleccionados para protección: {selectedDisks.Count}", "INFO");
+            
             // Crear y mostrar ventana de progreso
             var progressDialog = new ProgressDialog();
             progressDialog.UpdateProgress("Protegiendo discos", $"Procesando 0 de {selectedDisks.Count} discos...");
@@ -252,59 +219,100 @@ namespace DiskProtectorApp.ViewModels
             
             progressDialog.Show();
 
-            int successCount = 0;
-            int currentDisk = 0;
-            
-            foreach (var disk in selectedDisks)
+            try
             {
-                currentDisk++;
-                progressDialog.UpdateProgress($"Protegiendo disco {disk.DriveLetter}", $"Procesando {currentDisk} de {selectedDisks.Count} discos...");
+                IsWorking = true;
+                StatusMessage = $"Protegiendo {selectedDisks.Count} disco(s)...";
                 
-                var progress = new Progress<string>(message => {
-                    progressDialog.UpdateProgress($"Protegiendo disco {disk.DriveLetter}", message);
-                });
+                int successCount = 0;
+                int currentDisk = 0;
                 
-                bool success = await _diskService.ProtectDriveAsync(disk.DriveLetter ?? "", progress);
-                if (success)
+                foreach (var disk in selectedDisks)
                 {
-                    disk.IsProtected = true;
-                    successCount++;
-                    _logger.LogOperation("Proteger", disk.DriveLetter ?? "Desconocido", true);
-                    System.Diagnostics.Debug.WriteLine($"[VIEWMODEL] Successfully protected disk {disk.DriveLetter}");
-                    Console.WriteLine($"[VIEWMODEL] Successfully protected disk {disk.DriveLetter}");
+                    currentDisk++;
+                    LogMessage($"[VIEWMODEL] Protegiendo disco {disk.DriveLetter} ({currentDisk}/{selectedDisks.Count})", "INFO");
+                    progressDialog.UpdateProgress($"Protegiendo disco {disk.DriveLetter}", $"Procesando {currentDisk} de {selectedDisks.Count} discos...");
+                    
+                    var progress = new Progress<string>(message => {
+                        progressDialog.UpdateProgress($"Protegiendo disco {disk.DriveLetter}", message);
+                        LogMessage($"[VIEWMODEL] Progreso {disk.DriveLetter}: {message}", "DEBUG");
+                    });
+                    
+                    bool success = await _diskService.ProtectDriveAsync(disk.DriveLetter ?? "", progress);
+                    if (success)
+                    {
+                        // Verificar el estado real después de la operación
+                        bool isActuallyProtected = await Task.Run(() => {
+                            try
+                            {
+                                var service = new DiskService();
+                                return service.IsDriveProtected(disk.DriveLetter ?? "");
+                            }
+                            catch
+                            {
+                                return true; // Asumir protegido si hay error
+                            }
+                        });
+                        
+                        disk.IsProtected = isActuallyProtected;
+                        successCount++;
+                        _logger.LogOperation("Proteger", disk.DriveLetter ?? "Desconocido", true);
+                        LogMessage($"[VIEWMODEL] Disco {disk.DriveLetter} protegido exitosamente", "INFO");
+                    }
+                    else
+                    {
+                        _logger.LogOperation("Proteger", disk.DriveLetter ?? "Desconocido", false, "Error al aplicar permisos");
+                        LogMessage($"[VIEWMODEL] Error protegiendo disco {disk.DriveLetter}", "ERROR");
+                    }
                 }
-                else
-                {
-                    _logger.LogOperation("Proteger", disk.DriveLetter ?? "Desconocido", false, "Error al aplicar permisos");
-                    System.Diagnostics.Debug.WriteLine($"[VIEWMODEL] Failed to protect disk {disk.DriveLetter}");
-                    Console.WriteLine($"[VIEWMODEL] Failed to protect disk {disk.DriveLetter}");
-                }
+                
+                progressDialog.Close();
+                
+                StatusMessage = $"Protegidos {successCount} de {selectedDisks.Count} discos seleccionados";
+                IsWorking = false;
+                
+                // Mostrar mensaje de resultado
+                string resultMessage = $"Protección completada.\n\nDiscos protegidos: {successCount}\nDiscos con error: {selectedDisks.Count - successCount}";
+                MessageBox.Show(resultMessage, "Protección de discos", MessageBoxButton.OK, MessageBoxImage.Information);
+                
+                UpdateCommandStates();
+                LogMessage($"[VIEWMODEL] Protección completada - Exitosos: {successCount}, Errores: {selectedDisks.Count - successCount}", "INFO");
             }
-
-            progressDialog.Close();
-            
-            StatusMessage = $"Protegidos {successCount} de {selectedDisks.Count} discos seleccionados";
-            IsWorking = false;
-            
-            // Mostrar mensaje de resultado
-            string resultMessage = $"Protección completada.\n\nDiscos protegidos: {successCount}\nDiscos con error: {selectedDisks.Count - successCount}";
-            MessageBox.Show(resultMessage, "Protección de discos", MessageBoxButton.OK, MessageBoxImage.Information);
-            
-            // Actualizar estado de los comandos
-            UpdateCommandStates();
+            catch (Exception ex)
+            {
+                progressDialog.Close();
+                IsWorking = false;
+                StatusMessage = "Error durante la protección de discos";
+                
+                _logger.LogOperation("ERROR", "ProtectDisks", false, $"Exception: {ex.Message}");
+                LogMessage($"[VIEWMODEL] Excepción durante protección: {ex}", "ERROR");
+                
+                MessageBox.Show($"Error durante la protección de discos:\n{ex.Message}", 
+                              "Error de protección", 
+                              MessageBoxButton.OK, 
+                              MessageBoxImage.Error);
+                
+                UpdateCommandStates();
+            }
         }
 
         private async Task ExecuteUnprotectDisksAsync()
         {
+            LogMessage("[VIEWMODEL] Iniciando desprotección de discos", "INFO");
             var selectedDisks = _disks?.Where(d => d.IsSelected && d.IsSelectable && d.IsProtected).ToList() ?? new List<DiskInfo>();
-            if (!selectedDisks.Any()) return;
-
-            System.Diagnostics.Debug.WriteLine($"[VIEWMODEL] Unprotecting {selectedDisks.Count} disks");
-            Console.WriteLine($"[VIEWMODEL] Unprotecting {selectedDisks.Count} disks");
             
-            IsWorking = true;
-            StatusMessage = $"Desprotegiendo {selectedDisks.Count} disco(s)...";
-
+            if (selectedDisks.Count == 0)
+            {
+                LogMessage("[VIEWMODEL] No hay discos seleccionados para desproteger", "WARN");
+                MessageBox.Show("No hay discos seleccionados para desproteger.\n\nPor favor, seleccione al menos un disco protegido.", 
+                              "Desprotección de discos", 
+                              MessageBoxButton.OK, 
+                              MessageBoxImage.Information);
+                return;
+            }
+            
+            LogMessage($"[VIEWMODEL] Discos seleccionados para desprotección: {selectedDisks.Count}", "INFO");
+            
             // Crear y mostrar ventana de progreso
             var progressDialog = new ProgressDialog();
             progressDialog.UpdateProgress("Desprotegiendo discos", $"Procesando 0 de {selectedDisks.Count} discos...");
@@ -317,54 +325,115 @@ namespace DiskProtectorApp.ViewModels
             
             progressDialog.Show();
 
-            int successCount = 0;
-            int currentDisk = 0;
-            
-            foreach (var disk in selectedDisks)
+            try
             {
-                currentDisk++;
-                progressDialog.UpdateProgress($"Desprotegiendo disco {disk.DriveLetter}", $"Procesando {currentDisk} de {selectedDisks.Count} discos...");
+                IsWorking = true;
+                StatusMessage = $"Desprotegiendo {selectedDisks.Count} disco(s)...";
                 
-                var progress = new Progress<string>(message => {
-                    progressDialog.UpdateProgress($"Desprotegiendo disco {disk.DriveLetter}", message);
-                });
+                int successCount = 0;
+                int currentDisk = 0;
                 
-                bool success = await _diskService.UnprotectDriveAsync(disk.DriveLetter ?? "", progress);
-                if (success)
+                foreach (var disk in selectedDisks)
                 {
-                    disk.IsProtected = false;
-                    successCount++;
-                    _logger.LogOperation("Desproteger", disk.DriveLetter ?? "Desconocido", true);
-                    System.Diagnostics.Debug.WriteLine($"[VIEWMODEL] Successfully unprotected disk {disk.DriveLetter}");
-                    Console.WriteLine($"[VIEWMODEL] Successfully unprotected disk {disk.DriveLetter}");
+                    currentDisk++;
+                    LogMessage($"[VIEWMODEL] Desprotegiendo disco {disk.DriveLetter} ({currentDisk}/{selectedDisks.Count})", "INFO");
+                    progressDialog.UpdateProgress($"Desprotegiendo disco {disk.DriveLetter}", $"Procesando {currentDisk} de {selectedDisks.Count} discos...");
+                    
+                    var progress = new Progress<string>(message => {
+                        progressDialog.UpdateProgress($"Desprotegiendo disco {disk.DriveLetter}", message);
+                        LogMessage($"[VIEWMODEL] Progreso {disk.DriveLetter}: {message}", "DEBUG");
+                    });
+                    
+                    bool success = await _diskService.UnprotectDriveAsync(disk.DriveLetter ?? "", progress);
+                    if (success)
+                    {
+                        // Verificar el estado real después de la operación
+                        bool isActuallyUnprotected = await Task.Run(() => {
+                            try
+                            {
+                                var service = new DiskService();
+                                return !service.IsDriveProtected(disk.DriveLetter ?? "");
+                            }
+                            catch
+                            {
+                                return true; // Asumir desprotegido si hay error
+                            }
+                        });
+                        
+                        disk.IsProtected = !isActuallyUnprotected;
+                        successCount++;
+                        _logger.LogOperation("Desproteger", disk.DriveLetter ?? "Desconocido", true);
+                        LogMessage($"[VIEWMODEL] Disco {disk.DriveLetter} desprotegido exitosamente", "INFO");
+                    }
+                    else
+                    {
+                        _logger.LogOperation("Desproteger", disk.DriveLetter ?? "Desconocido", false, "Error al remover permisos");
+                        LogMessage($"[VIEWMODEL] Error desprotegiendo disco {disk.DriveLetter}", "ERROR");
+                    }
                 }
-                else
-                {
-                    _logger.LogOperation("Desproteger", disk.DriveLetter ?? "Desconocido", false, "Error al remover permisos");
-                    System.Diagnostics.Debug.WriteLine($"[VIEWMODEL] Failed to unprotect disk {disk.DriveLetter}");
-                    Console.WriteLine($"[VIEWMODEL] Failed to unprotect disk {disk.DriveLetter}");
-                }
+                
+                progressDialog.Close();
+                
+                StatusMessage = $"Desprotegidos {successCount} de {selectedDisks.Count} discos seleccionados";
+                IsWorking = false;
+                
+                // Mostrar mensaje de resultado
+                string resultMessage = $"Desprotección completada.\n\nDiscos desprotegidos: {successCount}\nDiscos con error: {selectedDisks.Count - successCount}";
+                MessageBox.Show(resultMessage, "Desprotección de discos", MessageBoxButton.OK, MessageBoxImage.Information);
+                
+                UpdateCommandStates();
+                LogMessage($"[VIEWMODEL] Desprotección completada - Exitosos: {successCount}, Errores: {selectedDisks.Count - successCount}", "INFO");
             }
+            catch (Exception ex)
+            {
+                progressDialog.Close();
+                IsWorking = false;
+                StatusMessage = "Error durante la desprotección de discos";
+                
+                _logger.LogOperation("ERROR", "UnprotectDisks", false, $"Exception: {ex.Message}");
+                LogMessage($"[VIEWMODEL] Excepción durante desprotección: {ex}", "ERROR");
+                
+                MessageBox.Show($"Error durante la desprotección de discos:\n{ex.Message}", 
+                              "Error de desprotección", 
+                              MessageBoxButton.OK, 
+                              MessageBoxImage.Error);
+                
+                UpdateCommandStates();
+            }
+        }
 
-            progressDialog.Close();
-            
-            StatusMessage = $"Desprotegidos {successCount} de {selectedDisks.Count} discos seleccionados";
-            IsWorking = false;
-            
-            // Mostrar mensaje de resultado
-            string resultMessage = $"Desprotección completada.\n\nDiscos desprotegidos: {successCount}\nDiscos con error: {selectedDisks.Count - successCount}";
-            MessageBox.Show(resultMessage, "Desprotección de discos", MessageBoxButton.OK, MessageBoxImage.Information);
-            
-            // Actualizar estado de los comandos
-            UpdateCommandStates();
+        private void LogMessage(string message, string level)
+        {
+            try
+            {
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                string logEntry = $"[{timestamp}] [{level}] {message}";
+                
+                // Escribir en Debug
+                System.Diagnostics.Debug.WriteLine(logEntry);
+                
+                // Escribir en Console
+                Console.WriteLine(logEntry);
+                
+                // Escribir en archivo de log
+                string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string logDirectory = Path.Combine(appDataPath, "DiskProtectorApp");
+                Directory.CreateDirectory(logDirectory);
+                string logPath = Path.Combine(logDirectory, "viewmodel-debug.log");
+                
+                File.AppendAllText(logPath, logEntry + Environment.NewLine);
+            }
+            catch
+            {
+                // Silenciar errores de logging
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
-            System.Diagnostics.Debug.WriteLine($"[VIEWMODEL] OnPropertyChanged: {propertyName}");
-            Console.WriteLine($"[VIEWMODEL] OnPropertyChanged: {propertyName}");
+            LogMessage($"[VIEWMODEL] Propiedad cambiada: {propertyName}", "DEBUG");
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
