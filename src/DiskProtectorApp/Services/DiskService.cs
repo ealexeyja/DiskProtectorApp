@@ -98,7 +98,7 @@ namespace DiskProtectorApp.Services
 
         /// <summary>
         /// Detecta si un disco está protegido verificando si tiene permisos explícitos configurados
-        /// según nuestro esquema de protección.
+        /// según nuestro esquema: herencia desactivada y permisos explícitos para SYSTEM/Admins/AuthUsers.
         /// </summary>
         private bool IsDriveProtected(string drivePath)
         {
@@ -106,80 +106,74 @@ namespace DiskProtectorApp.Services
             {
                 var directoryInfo = new DirectoryInfo(drivePath);
                 var security = directoryInfo.GetAccessControl();
-                var rules = security.GetAccessRules(true, true, typeof(IdentityReference));
+                var rules = security.GetAccessRules(true, true, typeof(NTAccount));
 
+                // Registrar información de depuración
+                System.Diagnostics.Debug.WriteLine($"[PERMISSIONS] Verificando protección para: {drivePath}");
+                Console.WriteLine($"[PERMISSIONS] Verificando protección para: {drivePath}");
+                
                 // Verificar si la herencia está desactivada
-                if (!security.AreAccessRulesProtected)
+                bool inheritanceProtected = security.AreAccessRulesProtected;
+                System.Diagnostics.Debug.WriteLine($"[PERMISSIONS] Herencia protegida: {inheritanceProtected}");
+                Console.WriteLine($"[PERMISSIONS] Herencia protegida: {inheritanceProtected}");
+                
+                if (!inheritanceProtected)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[PERMISSIONS] Herencia NO está desactivada, no está protegido por nosotros");
+                    Console.WriteLine($"[PERMISSIONS] Herencia NO está desactivada, no está protegido por nosotros");
                     return false; // Si la herencia está activa, no está protegido por nosotros
                 }
 
                 bool hasSystemFullControl = false;
                 bool hasAdminsFullControl = false;
-                bool hasAuthenticatedUsersRead = false;
-                bool hasUsersExplicit = false;
+                bool hasAuthUsersReadExecute = false;
 
                 foreach (FileSystemAccessRule rule in rules)
                 {
-                    // Intentar obtener el SID del IdentityReference
-                    SecurityIdentifier sid = null;
-                    if (rule.IdentityReference is SecurityIdentifier)
+                    System.Diagnostics.Debug.WriteLine($"[PERMISSIONS] Regla encontrada - Identity: {rule.IdentityReference.Value}, Type: {rule.AccessControlType}, Rights: {rule.FileSystemRights}");
+                    Console.WriteLine($"[PERMISSIONS] Regla encontrada - Identity: {rule.IdentityReference.Value}, Type: {rule.AccessControlType}, Rights: {rule.FileSystemRights}");
+                    
+                    // Verificar permisos explícitos
+                    if (rule.AccessControlType == AccessControlType.Allow)
                     {
-                        sid = (SecurityIdentifier)rule.IdentityReference;
-                    }
-                    else if (rule.IdentityReference is NTAccount)
-                    {
-                        try
-                        {
-                            sid = (SecurityIdentifier)((NTAccount)rule.IdentityReference).Translate(typeof(SecurityIdentifier));
-                        }
-                        catch (Exception)
-                        {
-                            // Si no se puede traducir, continuar
-                            continue;
-                        }
-                    }
-
-                    if (sid != null)
-                    {
-                        // Verificar permisos de SYSTEM
-                        if (sid == LOCAL_SYSTEM_SID &&
-                            rule.AccessControlType == AccessControlType.Allow &&
+                        // SYSTEM - Control Total
+                        if ((rule.IdentityReference.Value.Equals("SYSTEM", StringComparison.OrdinalIgnoreCase) ||
+                             rule.IdentityReference.Value.Equals("SISTEMA", StringComparison.OrdinalIgnoreCase)) &&
                             rule.FileSystemRights == FileSystemRights.FullControl)
                         {
                             hasSystemFullControl = true;
+                            System.Diagnostics.Debug.WriteLine($"[PERMISSIONS] Encontrada regla SYSTEM FullControl");
+                            Console.WriteLine($"[PERMISSIONS] Encontrada regla SYSTEM FullControl");
                         }
 
-                        // Verificar permisos de Administradores
-                        if (sid == BUILTIN_ADMINS_SID &&
-                            rule.AccessControlType == AccessControlType.Allow &&
+                        // Administradores - Control Total
+                        if ((rule.IdentityReference.Value.Equals("Administradores", StringComparison.OrdinalIgnoreCase) ||
+                             rule.IdentityReference.Value.Equals("Administrators", StringComparison.OrdinalIgnoreCase)) &&
                             rule.FileSystemRights == FileSystemRights.FullControl)
                         {
                             hasAdminsFullControl = true;
+                            System.Diagnostics.Debug.WriteLine($"[PERMISSIONS] Encontrada regla Administradores FullControl");
+                            Console.WriteLine($"[PERMISSIONS] Encontrada regla Administradores FullControl");
                         }
 
-                        // Verificar permisos de Usuarios autenticados (lectura)
-                        if (sid == AUTHENTICATED_USERS_SID &&
-                            rule.AccessControlType == AccessControlType.Allow &&
+                        // Usuarios autenticados - Solo lectura/ejecución
+                        if ((rule.IdentityReference.Value.Equals("Usuarios autenticados", StringComparison.OrdinalIgnoreCase) ||
+                             rule.IdentityReference.Value.Equals("Authenticated Users", StringComparison.OrdinalIgnoreCase)) &&
                             (rule.FileSystemRights & (FileSystemRights.ReadAndExecute | FileSystemRights.ListDirectory)) == 
                             (FileSystemRights.ReadAndExecute | FileSystemRights.ListDirectory))
                         {
-                            hasAuthenticatedUsersRead = true;
-                        }
-
-                        // Verificar si hay permisos explícitos para Usuarios
-                        if (sid == BUILTIN_USERS_SID)
-                        {
-                            hasUsersExplicit = true;
+                            hasAuthUsersReadExecute = true;
+                            System.Diagnostics.Debug.WriteLine($"[PERMISSIONS] Encontrada regla Usuarios autenticados Read/Execute");
+                            Console.WriteLine($"[PERMISSIONS] Encontrada regla Usuarios autenticados Read/Execute");
                         }
                     }
                 }
 
-                // Un disco está protegido si:
-                // 1. Tiene herencia desactivada
-                // 2. Tiene permisos explícitos para SYSTEM, Admins y Authenticated Users
-                // 3. NO tiene permisos explícitos para Usuarios (o tiene solo lectura)
-                return hasSystemFullControl && hasAdminsFullControl && hasAuthenticatedUsersRead && !hasUsersExplicit;
+                bool isProtected = hasSystemFullControl && hasAdminsFullControl && hasAuthUsersReadExecute;
+                System.Diagnostics.Debug.WriteLine($"[PERMISSIONS] Resultado detección: {isProtected} (SYSTEM: {hasSystemFullControl}, Admins: {hasAdminsFullControl}, AuthUsers: {hasAuthUsersReadExecute})");
+                Console.WriteLine($"[PERMISSIONS] Resultado detección: {isProtected} (SYSTEM: {hasSystemFullControl}, Admins: {hasAdminsFullControl}, AuthUsers: {hasAuthUsersReadExecute})");
+                
+                return isProtected;
             }
             catch (Exception ex)
             {
@@ -195,74 +189,84 @@ namespace DiskProtectorApp.Services
             {
                 try
                 {
+                    progress?.Report("Iniciando proceso de protección...");
+                    System.Diagnostics.Debug.WriteLine($"[PROTECT] Iniciando protección para: {drivePath}");
+                    Console.WriteLine($"[PROTECT] Iniciando protección para: {drivePath}");
+                    
                     progress?.Report("Obteniendo información del disco...");
                     var directoryInfo = new DirectoryInfo(drivePath);
                     
                     progress?.Report("Obteniendo permisos actuales...");
                     var security = directoryInfo.GetAccessControl();
                     
+                    progress?.Report("Verificando estado actual de herencia...");
+                    bool wasInheritanceProtected = security.AreAccessRulesProtected;
+                    System.Diagnostics.Debug.WriteLine($"[PROTECT] Estado actual de herencia protegida: {wasInheritanceProtected}");
+                    Console.WriteLine($"[PROTECT] Estado actual de herencia protegida: {wasInheritanceProtected}");
+                    
                     progress?.Report("Desactivando herencia de permisos...");
                     // Desactivar la herencia pero mantener las reglas existentes como reglas explícitas
                     security.SetAccessRuleProtection(true, false); // true = disable inheritance, false = do not preserve inherited rules
-                    
-                    progress?.Report("Limpiando reglas de permisos existentes...");
-                    // Limpiar todas las reglas existentes para tener control total
-                    var allRules = security.GetAccessRules(true, true, typeof(IdentityReference));
-                    var rulesToRemove = allRules.Cast<AuthorizationRule>().ToList();
-                    foreach (FileSystemAccessRule rule in rulesToRemove)
-                    {
-                        security.RemoveAccessRule(rule);
-                    }
+                    System.Diagnostics.Debug.WriteLine($"[PROTECT] Herencia desactivada");
+                    Console.WriteLine($"[PROTECT] Herencia desactivada");
                     
                     progress?.Report("Configurando permisos explícitos...");
                     
                     // 1. SYSTEM - Control Total
-                    var systemAccount = (NTAccount)LOCAL_SYSTEM_SID.Translate(typeof(NTAccount));
                     var systemRule = new FileSystemAccessRule(
-                        systemAccount,
+                        "SYSTEM",
                         FileSystemRights.FullControl,
                         InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
                         PropagationFlags.None,
                         AccessControlType.Allow);
-                    security.AddAccessRule(systemRule);
-                    progress?.Report($"Agregado Control Total para {systemAccount.Value}");
+                    security.SetAccessRule(systemRule);
+                    System.Diagnostics.Debug.WriteLine($"[PROTECT] Agregada regla SYSTEM FullControl");
+                    Console.WriteLine($"[PROTECT] Agregada regla SYSTEM FullControl");
+                    progress?.Report("Agregado Control Total para SYSTEM");
                     
                     // 2. Administradores - Control Total
-                    var adminsAccount = (NTAccount)BUILTIN_ADMINS_SID.Translate(typeof(NTAccount));
                     var adminRule = new FileSystemAccessRule(
-                        adminsAccount,
+                        "Administradores", // Usar nombre localizado
                         FileSystemRights.FullControl,
                         InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
                         PropagationFlags.None,
                         AccessControlType.Allow);
-                    security.AddAccessRule(adminRule);
-                    progress?.Report($"Agregado Control Total para {adminsAccount.Value}");
+                    security.SetAccessRule(adminRule);
+                    System.Diagnostics.Debug.WriteLine($"[PROTECT] Agregada regla Administradores FullControl");
+                    Console.WriteLine($"[PROTECT] Agregada regla Administradores FullControl");
+                    progress?.Report("Agregado Control Total para Administradores");
                     
                     // 3. Usuarios autenticados - Solo lectura y ejecución
-                    var authUsersAccount = (NTAccount)AUTHENTICATED_USERS_SID.Translate(typeof(NTAccount));
                     var authUsersRule = new FileSystemAccessRule(
-                        authUsersAccount,
+                        "Usuarios autenticados", // Usar nombre localizado
                         FileSystemRights.ReadAndExecute | FileSystemRights.ListDirectory,
                         InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
                         PropagationFlags.None,
                         AccessControlType.Allow);
-                    security.AddAccessRule(authUsersRule);
-                    progress?.Report($"Agregado Lectura/Ejecución para {authUsersAccount.Value}");
-                    
-                    // NOTA: NO agregamos permisos para el grupo "Usuarios"
-                    // Esto significa que los usuarios estándar no tendrán permisos explícitos
-                    // pero como también son "Usuarios autenticados", tendrán solo lectura
+                    security.SetAccessRule(authUsersRule);
+                    System.Diagnostics.Debug.WriteLine($"[PROTECT] Agregada regla Usuarios autenticados Read/Execute");
+                    Console.WriteLine($"[PROTECT] Agregada regla Usuarios autenticados Read/Execute");
+                    progress?.Report("Agregado Lectura/Ejecución para Usuarios autenticados");
                     
                     progress?.Report("Aplicando cambios de permisos...");
                     directoryInfo.SetAccessControl(security);
+                    System.Diagnostics.Debug.WriteLine($"[PROTECT] Permisos aplicados exitosamente");
+                    Console.WriteLine($"[PROTECT] Permisos aplicados exitosamente");
                     
                     progress?.Report("Protección completada exitosamente");
                     return true;
                 }
+                catch (UnauthorizedAccessException authEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PROTECT] ERROR DE PERMISOS: No se puede modificar los permisos de {drivePath}: {authEx.Message}");
+                    Console.WriteLine($"[PROTECT] ERROR DE PERMISOS: No se puede modificar los permisos de {drivePath}: {authEx.Message}");
+                    progress?.Report($"Error de permisos: {authEx.Message}");
+                    return false;
+                }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error protegiendo disco {drivePath}: {ex.Message}");
-                    Console.WriteLine($"Error protegiendo disco {drivePath}: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[PROTECT] Error protegiendo disco {drivePath}: {ex.Message}");
+                    Console.WriteLine($"[PROTECT] Error protegiendo disco {drivePath}: {ex.Message}");
                     progress?.Report($"Error: {ex.Message}");
                     return false;
                 }
@@ -275,6 +279,10 @@ namespace DiskProtectorApp.Services
             {
                 try
                 {
+                    progress?.Report("Iniciando proceso de desprotección...");
+                    System.Diagnostics.Debug.WriteLine($"[UNPROTECT] Iniciando desprotección para: {drivePath}");
+                    Console.WriteLine($"[UNPROTECT] Iniciando desprotección para: {drivePath}");
+                    
                     progress?.Report("Obteniendo información del disco...");
                     var directoryInfo = new DirectoryInfo(drivePath);
                     
@@ -284,17 +292,28 @@ namespace DiskProtectorApp.Services
                     progress?.Report("Reactivando herencia de permisos...");
                     // Reactivar la herencia de permisos (esto restaurará los permisos predeterminados)
                     security.SetAccessRuleProtection(false, false); // false = enable inheritance, false = do not preserve existing rules
+                    System.Diagnostics.Debug.WriteLine($"[UNPROTECT] Herencia reactivada");
+                    Console.WriteLine($"[UNPROTECT] Herencia reactivada");
                     
                     progress?.Report("Aplicando cambios de permisos...");
                     directoryInfo.SetAccessControl(security);
+                    System.Diagnostics.Debug.WriteLine($"[UNPROTECT] Permisos aplicados exitosamente");
+                    Console.WriteLine($"[UNPROTECT] Permisos aplicados exitosamente");
                     
                     progress?.Report("Desprotección completada exitosamente");
                     return true;
                 }
+                catch (UnauthorizedAccessException authEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[UNPROTECT] ERROR DE PERMISOS: No se puede modificar los permisos de {drivePath}: {authEx.Message}");
+                    Console.WriteLine($"[UNPROTECT] ERROR DE PERMISOS: No se puede modificar los permisos de {drivePath}: {authEx.Message}");
+                    progress?.Report($"Error de permisos: {authEx.Message}");
+                    return false;
+                }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error desprotegiendo disco {drivePath}: {ex.Message}");
-                    Console.WriteLine($"Error desprotegiendo disco {drivePath}: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[UNPROTECT] Error desprotegiendo disco {drivePath}: {ex.Message}");
+                    Console.WriteLine($"[UNPROTECT] Error desprotegiendo disco {drivePath}: {ex.Message}");
                     progress?.Report($"Error: {ex.Message}");
                     return false;
                 }
