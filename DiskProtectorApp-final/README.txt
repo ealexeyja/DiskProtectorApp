@@ -1,4 +1,4 @@
-DiskProtectorApp v1.2.5
+DiskProtectorApp v1.2.7
 ========================
 
 ESTRUCTURA DE ARCHIVOS CORRECTA PARA .NET:
