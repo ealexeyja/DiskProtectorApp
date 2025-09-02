@@ -1,20 +1,20 @@
 #!/bin/bash
 
-echo "=== Publicando en GitHub ==="
+echo "=== Publicando aplicación ==="
 
-# Obtener la versión actual
+# Obtener versión
 CURRENT_VERSION=$(grep -o '<Version>[^<]*' src/DiskProtectorApp/DiskProtectorApp.csproj | cut -d'>' -f2)
-echo "📦 Versión a publicar: v$CURRENT_VERSION"
+echo "📦 Versión: v$CURRENT_VERSION"
 
-# Verificar que existe el archivo comprimido
+# Verificar archivo comprimido
 if [ ! -f "./DiskProtectorApp-v$CURRENT_VERSION.tar.gz" ]; then
-    echo "❌ Error: No se encontró el archivo comprimido."
+    echo "❌ Error: No se encontró el archivo comprimido"
     exit 1
 fi
 
 # Commitear cambios
 git add .
-git commit -m "release: v$CURRENT_VERSION - Versión corregida"
+git commit -m "release: v$CURRENT_VERSION"
 
 # Push a main
 git push origin main
@@ -23,6 +23,5 @@ git push origin main
 git tag -a "v$CURRENT_VERSION" -m "Release v$CURRENT_VERSION"
 git push origin "v$CURRENT_VERSION"
 
-echo "✅ Publicación en GitHub completada"
+echo "✅ Publicación completada"
 echo "   Tag: v$CURRENT_VERSION"
-echo "   El workflow de GitHub Actions se ejecutará automáticamente"

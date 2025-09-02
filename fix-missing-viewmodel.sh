@@ -1,3 +1,21 @@
+#!/bin/bash
+
+echo "=== Corrigiendo ViewModel faltante ==="
+
+# Verificar estructura de carpetas
+echo "🔍 Verificando estructura de carpetas..."
+if [ ! -d "src/DiskProtectorApp/ViewModels" ]; then
+    echo "❌ Error: No se encontró la carpeta ViewModels"
+    echo "   Creando carpeta ViewModels..."
+    mkdir -p src/DiskProtectorApp/ViewModels
+fi
+
+# Crear MainViewModel.cs si no existe
+if [ ! -f "src/DiskProtectorApp/ViewModels/MainViewModel.cs" ]; then
+    echo "❌ Error: No se encontró MainViewModel.cs"
+    echo "   Creando MainViewModel.cs..."
+    
+    cat > src/DiskProtectorApp/ViewModels/MainViewModel.cs << 'VIEWMODELEOF'
 using DiskProtectorApp.Models;
 using DiskProtectorApp.Services;
 using System;
@@ -175,3 +193,30 @@ namespace DiskProtectorApp.ViewModels
         }
     }
 }
+VIEWMODELEOF
+
+    echo "✅ MainViewModel.cs creado exitosamente"
+else
+    echo "✅ MainViewModel.cs ya existe"
+fi
+
+# Verificar que el archivo se creó correctamente
+if [ -f "src/DiskProtectorApp/ViewModels/MainViewModel.cs" ]; then
+    echo "📊 Contenido de MainViewModel.cs:"
+    head -20 src/DiskProtectorApp/ViewModels/MainViewModel.cs
+    echo "   ... ($(wc -l < src/DiskProtectorApp/ViewModels/MainViewModel.cs) líneas en total)"
+else
+    echo "❌ Error: No se pudo crear MainViewModel.cs"
+    exit 1
+fi
+
+echo ""
+echo "✅ Corrección completada"
+echo "   Archivo creado: src/DiskProtectorApp/ViewModels/MainViewModel.cs"
+echo ""
+echo "Para aplicar los cambios:"
+echo "1. git add src/DiskProtectorApp/ViewModels/MainViewModel.cs"
+echo "2. git commit -m \"fix: Crear MainViewModel faltante\""
+echo "3. git push origin main"
+echo ""
+echo "Luego ejecuta './fix-namespace-reference.sh' nuevamente"
