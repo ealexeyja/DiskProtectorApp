@@ -7,7 +7,7 @@
   "targets": {
     ".NETCoreApp,Version=v8.0": {},
     ".NETCoreApp,Version=v8.0/win-x64": {
-      "DiskProtectorApp/1.2.1": {
+      "DiskProtectorApp/1.2.5": {
         "dependencies": {
           "ControlzEx": "5.0.2",
           "MahApps.Metro": "2.4.10",
@@ -207,7 +207,7 @@
     }
   },
   "libraries": {
-    "DiskProtectorApp/1.2.1": {
+    "DiskProtectorApp/1.2.5": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
