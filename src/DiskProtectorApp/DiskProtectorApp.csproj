@@ -12,10 +12,10 @@
     <ApplicationIcon>Resources\app.ico</ApplicationIcon>
     
     <!-- Configuración de versionado completa -->
-    <Version>1.2.1</Version>
-    <AssemblyVersion>1.2.1.0</AssemblyVersion>
-    <FileVersion>1.2.1.0</FileVersion>
-    <InformationalVersion>1.2.1</InformationalVersion>
+    <Version>1.2.5</Version>
+    <AssemblyVersion>1.2.5.0</AssemblyVersion>
+    <FileVersion>1.2.5.0</FileVersion>
+    <InformationalVersion>1.2.5</InformationalVersion>
     
     <!-- Propiedades adicionales para el ejecutable -->
     <Product>DiskProtectorApp</Product>

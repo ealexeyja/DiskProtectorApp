@@ -59,3 +59,5 @@
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/DiskProtectorApp.genruntimeconfig.cache
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/ref/DiskProtectorApp.dll
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/bin/Release/net8.0-windows/win-x64/de/MahApps.Metro.resources.dll
+/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/Views/ProgressDialog.baml
+/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/Views/ProgressDialog.g.cs
