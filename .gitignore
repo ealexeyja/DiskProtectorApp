@@ -1,0 +1,30 @@
+# Archivos binarios y compilados
+bin/
+obj/
+publish/
+publish-test/
+publish-v*
+DiskProtectorApp-final/
+DiskProtectorApp-v*.tar.gz
+
+# Archivos de logs
+*.log
+*.txt
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.suo
+*.user
+*.vspx
+*.cache
+
+# Archivos temporales
+*~
+*.tmp
+*.temp
+
+# Archivos de sistema
+Thumbs.db
+.DS_Store
+.git
