@@ -3,6 +3,7 @@ using MahApps.Metro.Controls;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Security.Principal;
 using System.Windows;
 
 namespace DiskProtectorApp.Views
@@ -58,7 +59,7 @@ namespace DiskProtectorApp.Views
 DESCRIPCIÓN:
 Aplicación para protección de discos mediante gestión de permisos NTFS.
 
-⚠️ REQUERIMIENTOS TÉCNICOS:
+⚠️ REQUISITOS TÉCNICOS:
 
 🔷 EJECUCIÓN COMO ADMINISTRADOR:
 • La aplicación DEBE ejecutarse con privilegios de administrador
@@ -73,23 +74,12 @@ Aplicación para protección de discos mediante gestión de permisos NTFS.
 • Sistema de archivos NTFS
 
 INSTRUCCIONES DE USO:
-1. Ejecutar DiskProtectorApp.exe como Administrador
+1. Ejecutar la aplicación como Administrador
 2. Seleccionar los discos a proteger/desproteger
 3. Click en el botón correspondiente
 4. Esperar confirmación de la operación
 
-FUNCIONAMIENTO DE PERMISOS:
-• DISCO DESPROTEGIDO (NORMAL):
-  - Grupo "Usuarios" tiene permisos básicos: Lectura y ejecución, Mostrar contenido de carpeta, Lectura
-  - Grupo "Usuarios autenticados" tiene permisos de modificación/escritura
-  - Grupo "Administradores" y "SYSTEM" tienen Control Total (siempre)
-
-• DISCO PROTEGIDO:
-  - Grupo "Usuarios" NO tiene permisos establecidos
-  - Grupo "Usuarios autenticados" solo tiene permisos básicos: Lectura y ejecución, Mostrar contenido de carpeta, Lectura
-  - Grupo "Administradores" y "SYSTEM" mantienen Control Total (siempre)
-
-REGISTRO DE OPERACIONES:
+📝 REGISTRO DE OPERACIONES:
 • Todas las operaciones se registran en:
 • %APPDATA%\DiskProtectorApp\operations.log
 • Se conservan los últimos 30 días de registros
@@ -99,7 +89,7 @@ LOGS DE DIAGNÓSTICO:
 • %APPDATA%\DiskProtectorApp\app-debug.log
 • Niveles: INFO, DEBUG, WARN, ERROR, VERBOSE
 
- Versión actual: v1.2.6";
+ Versión actual: {versionText}";
 
             MessageBox.Show(helpText, "Ayuda de DiskProtectorApp", MessageBoxButton.OK, MessageBoxImage.Information);
         }
