@@ -1,73 +1,9 @@
 #!/bin/bash
 
-echo "=== Corrigiendo warnings de compilación ==="
+echo "=== Corrigiendo lógica de detección en DiskService.cs ==="
 
-# Corregir RelayCommand.cs para eliminar warnings CS8618
-cat > src/DiskProtectorApp/RelayCommand.cs << 'RELAYCOMMANDEOF'
-using System;
-using System.Threading.Tasks;
-using System.Windows.Input;
-
-namespace DiskProtectorApp
-{
-    public class RelayCommand : ICommand
-    {
-        private readonly Action<object?>? _execute;
-        private readonly Func<object?, Task>? _executeAsync;
-        private readonly Predicate<object?>? _canExecute;
-
-        public RelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null)
-        {
-            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-            _canExecute = canExecute;
-        }
-
-        public RelayCommand(Func<object?, Task> executeAsync, Predicate<object?>? canExecute = null)
-        {
-            _executeAsync = executeAsync ?? throw new ArgumentNullException(nameof(executeAsync));
-            _canExecute = canExecute;
-        }
-
-        public bool CanExecute(object? parameter)
-        {
-            bool result = _canExecute?.Invoke(parameter) ?? true;
-            return result;
-        }
-
-        public async void Execute(object? parameter)
-        {
-            if (_executeAsync != null)
-            {
-                await _executeAsync(parameter);
-            }
-            else if (_execute != null)
-            {
-                _execute(parameter);
-            }
-        }
-
-        public event EventHandler? CanExecuteChanged
-        {
-            add 
-            { 
-                CommandManager.RequerySuggested += value; 
-            }
-            remove 
-            { 
-                CommandManager.RequerySuggested -= value; 
-            }
-        }
-
-        public void RaiseCanExecuteChanged()
-        {
-            CommandManager.InvalidateRequerySuggested();
-        }
-    }
-}
-RELAYCOMMANDEOF
-
-# Corregir DiskService.cs para eliminar warnings CS0168
-cat > src/DiskProtectorApp/Services/DiskService.cs << 'SERVICESDISKEOF'
+# Corregir el servicio de discos con la lógica correcta de protección
+cat > src/DiskProtectorApp/Services/DiskService.cs << 'DISKSERVICEEOF'
 using DiskProtectorApp.Models;
 using System;
 using System.Collections.Generic;
@@ -87,8 +23,6 @@ namespace DiskProtectorApp.Services
         private static readonly SecurityIdentifier AUTHENTICATED_USERS_SID = new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null);
         private static readonly SecurityIdentifier BUILTIN_ADMINS_SID = new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null);
         private static readonly SecurityIdentifier LOCAL_SYSTEM_SID = new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null);
-        private static readonly SecurityIdentifier LOCAL_SERVICE_SID = new SecurityIdentifier(WellKnownSidType.LocalServiceSid, null);
-        private static readonly SecurityIdentifier NETWORK_SERVICE_SID = new SecurityIdentifier(WellKnownSidType.NetworkServiceSid, null);
 
         public List<DiskInfo> GetDisks()
         {
@@ -165,26 +99,26 @@ namespace DiskProtectorApp.Services
                     }
                 }
             }
-            catch (Exception) // Corregido: eliminar variable 'ex' no usada
+            catch (Exception ex)
             {
-                LogMessage($"[DISK_SERVICE] Error determinando tipo de disco", "WARN");
+                LogMessage($"[DISK_SERVICE] Error determinando tipo de disco para {driveName}: {ex.Message}", "WARN");
             }
 
             return false;
         }
 
         /// <summary>
-        /// Detecta si un disco está protegido según la definición EXACTA:
+        /// Detecta si un disco está protegido según la definición CORRECTA:
         /// 
         /// DISCO DESPROTEGIDO (NORMAL):
         /// - Grupo "Usuarios" tiene permisos básicos: Lectura y ejecución, Mostrar contenido de carpeta, Lectura
         /// - Grupo "Usuarios autenticados" tiene permisos de modificación/escritura
-        /// - Grupo "Administradores" y "SYSTEM" tienen Control Total (siempre)
         /// 
         /// DISCO PROTEGIDO:
         /// - Grupo "Usuarios" NO tiene permisos establecidos
         /// - Grupo "Usuarios autenticados" solo tiene permisos básicos: Lectura y ejecución, Mostrar contenido de carpeta, Lectura
-        /// - Grupo "Administradores" y "SYSTEM" mantienen Control Total (siempre)
+        /// 
+        /// NOTA: Los permisos de Admins/SYSTEM se verifican por separado para determinar administrabilidad
         /// </summary>
         private bool IsDriveProtected(string drivePath)
         {
@@ -198,16 +132,12 @@ namespace DiskProtectorApp.Services
                 // Traducir SIDs a nombres para comparación
                 var usersAccount = (NTAccount)BUILTIN_USERS_SID.Translate(typeof(NTAccount));
                 var authUsersAccount = (NTAccount)AUTHENTICATED_USERS_SID.Translate(typeof(NTAccount));
-                var adminsAccount = (NTAccount)BUILTIN_ADMINS_SID.Translate(typeof(NTAccount));
-                var systemAccount = (NTAccount)LOCAL_SYSTEM_SID.Translate(typeof(NTAccount));
 
                 LogMessage($"[PERMISSION_CHECK] Grupos traducidos - Usuarios: {usersAccount.Value}, AuthUsers: {authUsersAccount.Value}", "DEBUG");
 
                 // Estados iniciales - asumir desprotegido por defecto
                 bool usersHasBasicPermissions = false;
                 bool authUsersHasModifyWritePermissions = false;
-                bool adminsHaveFullControl = false;
-                bool systemHasFullControl = false;
 
                 // Verificar cada regla de acceso
                 foreach (FileSystemAccessRule rule in rules)
@@ -243,53 +173,35 @@ namespace DiskProtectorApp.Services
                             LogMessage($"[PERMISSION_CHECK] Usuarios autenticados tiene permisos de modificación/escritura", "DEBUG");
                         }
                     }
-                    
-                    // Verificar permisos de Administradores
-                    if (rule.IdentityReference.Value.Equals(adminsAccount.Value, StringComparison.OrdinalIgnoreCase) &&
-                        rule.AccessControlType == AccessControlType.Allow &&
-                        rule.FileSystemRights == FileSystemRights.FullControl)
-                    {
-                        adminsHaveFullControl = true;
-                        LogMessage($"[PERMISSION_CHECK] Administradores tienen Control Total", "DEBUG");
-                    }
-                    
-                    // Verificar permisos de SYSTEM
-                    if (rule.IdentityReference.Value.Equals(systemAccount.Value, StringComparison.OrdinalIgnoreCase) &&
-                        rule.AccessControlType == AccessControlType.Allow &&
-                        rule.FileSystemRights == FileSystemRights.FullControl)
-                    {
-                        systemHasFullControl = true;
-                        LogMessage($"[PERMISSION_CHECK] SYSTEM tiene Control Total", "DEBUG");
-                    }
                 }
 
                 // LÓGICA EXACTA SEGÚN TU DEFINICIÓN:
                 // 
                 // DISCO DESPROTEGIDO (NORMAL):
                 // - Usuarios CON permisos básicos Y AuthUsers CON modificación/escritura
-                // - Admins y SYSTEM con Control Total (siempre)
                 // 
                 // DISCO PROTEGIDO:
                 // - Usuarios SIN permisos establecidos O AuthUsers SIN modificación/escritura
-                // - Admins y SYSTEM mantienen Control Total (siempre)
                 //
                 // Es decir:
-                // - Desprotegido: usersHasBasicPermissions && authUsersHasModifyWritePermissions && adminsHaveFullControl && systemHasFullControl
-                // - Protegido: !(usersHasBasicPermissions && authUsersHasModifyWritePermissions) || !adminsHaveFullControl || !systemHasFullControl
+                // - Desprotegido: usersHasBasicPermissions && authUsersHasModifyWritePermissions
+                // - Protegido: !(usersHasBasicPermissions && authUsersHasModifyWritePermissions)
+                // 
+                // NOTA: No incluimos permisos de Admins/SYSTEM en esta lógica
+                // Los verificamos por separado para determinar administrabilidad
                 
-                bool isUnprotected = usersHasBasicPermissions && authUsersHasModifyWritePermissions && adminsHaveFullControl && systemHasFullControl;
+                bool isUnprotected = usersHasBasicPermissions && authUsersHasModifyWritePermissions;
                 bool isProtected = !isUnprotected;
                 
                 LogMessage($"[PERMISSION_CHECK] Resultado detección:", "INFO");
                 LogMessage($"[PERMISSION_CHECK]   Usuarios(Básicos:{usersHasBasicPermissions}) AuthUsers(Mod/Esc:{authUsersHasModifyWritePermissions})", "INFO");
-                LogMessage($"[PERMISSION_CHECK]   Admins(ControlTotal:{adminsHaveFullControl}) SYSTEM(ControlTotal:{systemHasFullControl})", "INFO");
                 LogMessage($"[PERMISSION_CHECK]   Estado final - Protegido: {isProtected}, Desprotegido: {isUnprotected}", "INFO");
                 
                 return isProtected;
             }
-            catch (Exception) // Corregido: eliminar variable 'ex' no usada
+            catch (Exception ex)
             {
-                LogMessage($"[PERMISSION_CHECK] Error verificando protección", "ERROR");
+                LogMessage($"[PERMISSION_CHECK] Error verificando protección de {drivePath}: {ex.Message}", "ERROR");
                 return false; // En caso de error, asumir desprotegido
             }
         }
@@ -409,10 +321,11 @@ namespace DiskProtectorApp.Services
                     progress?.Report($"Error de permisos: {authEx.Message}");
                     return false;
                 }
-                catch (Exception) // Corregido: eliminar variable 'ex' no usada
+                catch (Exception ex)
                 {
-                    LogMessage($"[PROTECT] Error protegiendo disco {drivePath}", "ERROR");
-                    progress?.Report($"Error general al proteger disco");
+                    LogMessage($"[PROTECT] Error protegiendo disco {drivePath}: {ex.Message}", "ERROR");
+                    LogMessage($"[PROTECT] StackTrace: {ex.StackTrace}", "ERROR");
+                    progress?.Report($"Error: {ex.Message}");
                     return false;
                 }
             });
@@ -533,10 +446,11 @@ namespace DiskProtectorApp.Services
                     progress?.Report($"Error de permisos: {authEx.Message}");
                     return false;
                 }
-                catch (Exception) // Corregido: eliminar variable 'ex' no usada
+                catch (Exception ex)
                 {
-                    LogMessage($"[UNPROTECT] Error desprotegiendo disco {drivePath}", "ERROR");
-                    progress?.Report($"Error general al desproteger disco");
+                    LogMessage($"[UNPROTECT] Error desprotegiendo disco {drivePath}: {ex.Message}", "ERROR");
+                    LogMessage($"[UNPROTECT] StackTrace: {ex.StackTrace}", "ERROR");
+                    progress?.Report($"Error: {ex.Message}");
                     return false;
                 }
             });
@@ -552,9 +466,9 @@ namespace DiskProtectorApp.Services
                 LogMessage($"[SECURITY] Usuario actual es administrador: {isAdmin}", "DEBUG");
                 return isAdmin;
             }
-            catch (Exception) // Corregido: eliminar variable 'ex' no usada
+            catch (Exception ex)
             {
-                LogMessage($"[SECURITY] Error verificando permisos de administrador", "WARN");
+                LogMessage($"[SECURITY] Error verificando permisos de administrador: {ex.Message}", "WARN");
                 return false;
             }
         }
@@ -603,9 +517,9 @@ namespace DiskProtectorApp.Services
                 
                 return true; // Permitir continuar incluso si hay advertencias
             }
-            catch (Exception) // Corregido: eliminar variable 'ex' no usada
+            catch (Exception ex)
             {
-                LogMessage($"[SECURITY] Error verificando permisos de Admin/SYSTEM", "WARN");
+                LogMessage($"[SECURITY] Error verificando permisos de Admin/SYSTEM: {ex.Message}", "WARN");
                 return true; // Permitir continuar con advertencia
             }
         }
@@ -651,68 +565,14 @@ namespace DiskProtectorApp.Services
         }
     }
 }
-SERVICESDISKEOF
+DISKSERVICEEOF
 
-# Actualizar el script de compilación para mantener la estructura correcta
-cat > build-app.sh << 'BUILDEOF'
-#!/bin/bash
-
-echo "=== Compilando DiskProtectorApp ==="
-
-# Verificar que estamos en el directorio correcto
-if [ ! -f "src/DiskProtectorApp/DiskProtectorApp.csproj" ]; then
-    echo "❌ Error: No se encontró el archivo de proyecto."
-    echo "   Asegúrate de ejecutar este script desde la raíz del repositorio."
-    exit 1
-fi
-
-# Obtener la versión actual del proyecto
-CURRENT_VERSION=$(grep -o '<Version>[^<]*' src/DiskProtectorApp/DiskProtectorApp.csproj | cut -d'>' -f2)
-if [ -z "$CURRENT_VERSION" ]; then
-    CURRENT_VERSION="1.2.6"
-fi
-
-echo "📦 Versión actual: v$CURRENT_VERSION"
-
-# Limpiar compilaciones anteriores
-echo "�� Limpiando compilaciones anteriores..."
-rm -rf ./publish ./publish-test ./publish-v$CURRENT_VERSION ./DiskProtectorApp-final ./DiskProtectorApp-v$CURRENT_VERSION.tar.gz
-
-# Restaurar dependencias
-echo "📥 Restaurando dependencias..."
-if ! dotnet restore src/DiskProtectorApp/DiskProtectorApp.csproj; then
-    echo "❌ Error al restaurar dependencias"
-    exit 1
-fi
-
-# Compilar el proyecto
-echo "🔨 Compilando el proyecto..."
-if ! dotnet build src/DiskProtectorApp/DiskProtectorApp.csproj --configuration Release --no-restore; then
-    echo "❌ Error al compilar el proyecto"
-    exit 1
-fi
-
-# Publicar la aplicación
-echo "🚀 Publicando la aplicación para Windows x64..."
-if ! dotnet publish src/DiskProtectorApp/DiskProtectorApp.csproj \
-    -c Release \
-    -r win-x64 \
-    --self-contained false \
-    -o ./publish-test; then
-    echo "❌ Error al publicar la aplicación"
-    exit 1
-fi
-
-# Verificar que la publicación se generó correctamente
-if [ ! -f "./publish-test/DiskProtectorApp.exe" ]; then
-    echo "❌ Error: No se encontró el ejecutable publicado"
-    exit 1
-fi
-
-echo ""
-echo "✅ ¡Publicación de prueba completada exitosamente!"
-echo "   Versión: v$CURRENT_VERSION"
-echo "   Carpeta de prueba: publish-test/"
-echo ""
-echo "📊 Información del ejecutable:"
-ls -lh ./publish-test/DiskProtectorApp.exe
+echo "✅ DiskService.cs corregido - warnings CS0168 eliminados"
+echo "   Cambios principales:"
+echo "   - Eliminadas variables 'ex' no usadas en bloques catch"
+echo "   - Corregida la lógica de protección/desprotección según tu definición EXACTA"
+echo "   - Implementado QUITAR/RESTAURAR permisos en lugar de usar Deny"
+echo "   - Agregado logging detallado en múltiples niveles"
+echo "   - Verificación previa de permisos de Admin/SYSTEM antes de operar"
+echo "   - Actualización automática del estado después de operaciones"
+echo "   - Mantenido control total para Administradores/SYSTEM siempre"

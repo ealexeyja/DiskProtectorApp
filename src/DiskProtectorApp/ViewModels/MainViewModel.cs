@@ -25,26 +25,7 @@ namespace DiskProtectorApp.ViewModels
             get => _disks;
             set
             {
-                // Desuscribirse de los eventos de los discos anteriores
-                if (_disks != null)
-                {
-                    foreach (var disk in _disks)
-                    {
-                        disk.PropertyChanged -= OnDiskPropertyChanged;
-                    }
-                }
-                
                 _disks = value ?? new ObservableCollection<DiskInfo>();
-                
-                // Suscribirse a los eventos de los nuevos discos
-                if (_disks != null)
-                {
-                    foreach (var disk in _disks)
-                    {
-                        disk.PropertyChanged += OnDiskPropertyChanged;
-                    }
-                }
-                
                 OnPropertyChanged();
                 UpdateCommandStates();
             }
@@ -87,18 +68,6 @@ namespace DiskProtectorApp.ViewModels
             RefreshDisks();
         }
 
-        private void OnDiskPropertyChanged(object? sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == nameof(DiskInfo.IsSelected) || 
-                e.PropertyName == nameof(DiskInfo.IsProtected))
-            {
-                var disk = sender as DiskInfo;
-                
-                // Actualizar estado de comandos
-                UpdateCommandStates();
-            }
-        }
-
         private void UpdateCommandStates()
         {
             CommandManager.InvalidateRequerySuggested();
@@ -106,7 +75,7 @@ namespace DiskProtectorApp.ViewModels
 
         private bool CanAlwaysExecute(object? parameter)
         {
-            bool canExecute = !IsWorking;
+            bool canExecute = !IsWorking && Disks.Any(d => d.IsSelected);
             return canExecute;
         }
 
@@ -121,26 +90,16 @@ namespace DiskProtectorApp.ViewModels
             StatusMessage = "Actualizando lista de discos...";
             
             var disks = _diskService.GetDisks();
-            
-            // Desuscribirse de los eventos de los discos anteriores
-            foreach (var disk in _disks)
-            {
-                disk.PropertyChanged -= OnDiskPropertyChanged;
-            }
-            
             Disks.Clear();
             
             foreach (var disk in disks)
             {
                 Disks.Add(disk);
-                // Suscribirse al cambio de propiedad para actualizar comandos
-                disk.PropertyChanged += OnDiskPropertyChanged;
             }
             
             StatusMessage = $"Se encontraron {disks.Count} discos";
             IsWorking = false;
             
-            // Actualizar estado de los comandos
             UpdateCommandStates();
         }
 
@@ -176,7 +135,6 @@ namespace DiskProtectorApp.ViewModels
             StatusMessage = $"Protegidos {successCount} de {selectedDisks.Count} discos seleccionados";
             IsWorking = false;
             
-            // Actualizar estado de los comandos
             UpdateCommandStates();
         }
 
@@ -211,7 +169,6 @@ namespace DiskProtectorApp.ViewModels
             StatusMessage = $"Desprotegidos {successCount} de {selectedDisks.Count} discos seleccionados";
             IsWorking = false;
             
-            // Actualizar estado de los comandos
             UpdateCommandStates();
         }
 
