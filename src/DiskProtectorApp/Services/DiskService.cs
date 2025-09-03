@@ -12,6 +12,12 @@ namespace DiskProtectorApp.Services
 {
     public class DiskService
     {
+        // Constantes para los SIDs de grupos bien conocidos
+        private static readonly SecurityIdentifier BUILTIN_USERS_SID = new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null);
+        private static readonly SecurityIdentifier AUTHENTICATED_USERS_SID = new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null);
+        private static readonly SecurityIdentifier BUILTIN_ADMINS_SID = new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null);
+        private static readonly SecurityIdentifier LOCAL_SYSTEM_SID = new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null);
+
         public List<DiskInfo> GetDisks()
         {
             var disks = new List<DiskInfo>();
@@ -88,6 +94,19 @@ namespace DiskProtectorApp.Services
             return false;
         }
 
+        /// <summary>
+        /// Detecta si un disco está protegido según la definición EXACTA:
+        /// 
+        /// DISCO DESPROTEGIDO (NORMAL):
+        /// - Grupo "Usuarios" tiene permisos básicos: Lectura y ejecución, Mostrar contenido de carpeta, Lectura
+        /// - Grupo "Usuarios autenticados" tiene permisos de modificación/escritura
+        /// - Grupo "Administradores" y "SYSTEM" tienen Control Total (siempre)
+        /// 
+        /// DISCO PROTEGIDO:
+        /// - Grupo "Usuarios" NO tiene permisos establecidos
+        /// - Grupo "Usuarios autenticados" solo tiene permisos básicos: Lectura y ejecución, Mostrar contenido de carpeta, Lectura
+        /// - Grupo "Administradores" y "SYSTEM" mantienen Control Total (siempre)
+        /// </summary>
         private bool IsDriveProtected(string drivePath)
         {
             try
@@ -96,21 +115,54 @@ namespace DiskProtectorApp.Services
                 var security = directoryInfo.GetAccessControl();
                 var rules = security.GetAccessRules(true, true, typeof(NTAccount));
 
-                // Verificar si hay reglas que deniegan acceso a Usuarios
+                // Traducir SIDs a nombres para comparación
+                var usersAccount = (NTAccount)BUILTIN_USERS_SID.Translate(typeof(NTAccount));
+                var authUsersAccount = (NTAccount)AUTHENTICATED_USERS_SID.Translate(typeof(NTAccount));
+
+                // Estados iniciales - asumir desprotegido por defecto
+                bool usersHasBasicPermissions = false;
+                bool authUsersHasModifyWritePermissions = false;
+
+                // Verificar cada regla de acceso
                 foreach (FileSystemAccessRule rule in rules)
                 {
-                    if (rule.IdentityReference.Value.Equals("Usuarios", StringComparison.OrdinalIgnoreCase) ||
-                        rule.IdentityReference.Value.Equals("Users", StringComparison.OrdinalIgnoreCase))
+                    // Verificar permisos de Usuarios (lectura básica)
+                    if (rule.IdentityReference.Value.Equals(usersAccount.Value, StringComparison.OrdinalIgnoreCase) &&
+                        rule.AccessControlType == AccessControlType.Allow)
                     {
-                        if (rule.AccessControlType == AccessControlType.Deny &&
-                            (rule.FileSystemRights & FileSystemRights.Modify) == FileSystemRights.Modify)
+                        var rights = rule.FileSystemRights;
+                        // Verificar si tiene permisos básicos de lectura
+                        if ((rights & (FileSystemRights.ReadAndExecute | FileSystemRights.ListDirectory | FileSystemRights.Read)) != 0)
                         {
-                            return true;
+                            usersHasBasicPermissions = true;
+                        }
+                    }
+                    
+                    // Verificar permisos de Usuarios autenticados (modificación/escritura)
+                    if (rule.IdentityReference.Value.Equals(authUsersAccount.Value, StringComparison.OrdinalIgnoreCase) &&
+                        rule.AccessControlType == AccessControlType.Allow)
+                    {
+                        var rights = rule.FileSystemRights;
+                        // Verificar si tiene permisos de modificación o escritura
+                        if ((rights & (FileSystemRights.Modify | FileSystemRights.Write)) != 0)
+                        {
+                            authUsersHasModifyWritePermissions = true;
                         }
                     }
                 }
 
-                return false;
+                // LÓGICA EXACTA SEGÚN TU DEFINICIÓN:
+                // 
+                // DISCO DESPROTEGIDO (NORMAL):
+                // - Usuarios CON permisos básicos Y AuthUsers CON modificación/escritura
+                // 
+                // DISCO PROTEGIDO:
+                // - Usuarios SIN permisos básicos O AuthUsers SIN modificación/escritura
+                //
+                bool isUnprotected = usersHasBasicPermissions && authUsersHasModifyWritePermissions;
+                bool isProtected = !isUnprotected;
+                
+                return isProtected;
             }
             catch (Exception ex)
             {
@@ -126,23 +178,72 @@ namespace DiskProtectorApp.Services
                 try
                 {
                     progress?.Report("Iniciando proceso de protección...");
+                    
+                    // Verificar permisos de administrador
+                    if (!IsCurrentUserAdministrator())
+                    {
+                        progress?.Report("ERROR: Se requieren permisos de administrador");
+                        return false;
+                    }
+                    
                     var directoryInfo = new DirectoryInfo(drivePath);
                     var security = directoryInfo.GetAccessControl();
                     
-                    // Denegar acceso al grupo de Usuarios
-                    var usersAccount = new NTAccount("Usuarios");
-                    var denyRule = new FileSystemAccessRule(
+                    // Traducir SIDs a cuentas
+                    var usersAccount = (NTAccount)BUILTIN_USERS_SID.Translate(typeof(NTAccount));
+                    var authUsersAccount = (NTAccount)AUTHENTICATED_USERS_SID.Translate(typeof(NTAccount));
+                    
+                    // QUITAR permisos específicos (NO usar Deny):
+                    // QUITAR permisos básicos de lectura a Usuarios
+                    var usersBasicRule = new FileSystemAccessRule(
                         usersAccount,
-                        FileSystemRights.Modify,
+                        FileSystemRights.ReadAndExecute | FileSystemRights.ListDirectory | FileSystemRights.Read,
                         InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
                         PropagationFlags.None,
-                        AccessControlType.Deny);
+                        AccessControlType.Allow);
                     
-                    security.AddAccessRule(denyRule);
+                    security.RemoveAccessRule(usersBasicRule);
+                    
+                    // QUITAR permisos de modificación/escritura a Usuarios autenticados
+                    var authUsersModifyWriteRule = new FileSystemAccessRule(
+                        authUsersAccount,
+                        FileSystemRights.Modify | FileSystemRights.Write,
+                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                        PropagationFlags.None,
+                        AccessControlType.Allow);
+                    
+                    security.RemoveAccessRule(authUsersModifyWriteRule);
+                    
+                    // Asegurar que Admins y SYSTEM mantienen control total
+                    var adminsAccount = (NTAccount)BUILTIN_ADMINS_SID.Translate(typeof(NTAccount));
+                    var systemAccount = (NTAccount)LOCAL_SYSTEM_SID.Translate(typeof(NTAccount));
+                    
+                    var adminsRule = new FileSystemAccessRule(
+                        adminsAccount,
+                        FileSystemRights.FullControl,
+                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                        PropagationFlags.None,
+                        AccessControlType.Allow);
+                    security.SetAccessRule(adminsRule);
+                    
+                    var systemRule = new FileSystemAccessRule(
+                        systemAccount,
+                        FileSystemRights.FullControl,
+                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                        PropagationFlags.None,
+                        AccessControlType.Allow);
+                    security.SetAccessRule(systemRule);
+                    
+                    // Aplicar cambios
                     directoryInfo.SetAccessControl(security);
                     
                     progress?.Report("Protección completada exitosamente");
                     return true;
+                }
+                catch (UnauthorizedAccessException authEx)
+                {
+                    progress?.Report($"Error de permisos: {authEx.Message}");
+                    return false;
                 }
                 catch (Exception ex)
                 {
@@ -159,31 +260,72 @@ namespace DiskProtectorApp.Services
                 try
                 {
                     progress?.Report("Iniciando proceso de desprotección...");
+                    
+                    // Verificar permisos de administrador
+                    if (!IsCurrentUserAdministrator())
+                    {
+                        progress?.Report("ERROR: Se requieren permisos de administrador");
+                        return false;
+                    }
+                    
                     var directoryInfo = new DirectoryInfo(drivePath);
                     var security = directoryInfo.GetAccessControl();
-                    var rules = security.GetAccessRules(true, true, typeof(NTAccount));
                     
-                    var usersAccount = new NTAccount("Usuarios");
-                    var rulesToRemove = new List<FileSystemAccessRule>();
+                    // Traducir SIDs a cuentas
+                    var usersAccount = (NTAccount)BUILTIN_USERS_SID.Translate(typeof(NTAccount));
+                    var authUsersAccount = (NTAccount)AUTHENTICATED_USERS_SID.Translate(typeof(NTAccount));
                     
-                    foreach (FileSystemAccessRule rule in rules)
-                    {
-                        if (rule.IdentityReference.Value.Equals(usersAccount.Value, StringComparison.OrdinalIgnoreCase) &&
-                            rule.AccessControlType == AccessControlType.Deny &&
-                            (rule.FileSystemRights & FileSystemRights.Modify) == FileSystemRights.Modify)
-                        {
-                            rulesToRemove.Add(rule);
-                        }
-                    }
+                    // RESTAURAR permisos específicos que se quitaron:
+                    // RESTAURAR permisos básicos de lectura a Usuarios
+                    var usersBasicRule = new FileSystemAccessRule(
+                        usersAccount,
+                        FileSystemRights.ReadAndExecute | FileSystemRights.ListDirectory | FileSystemRights.Read,
+                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                        PropagationFlags.None,
+                        AccessControlType.Allow);
                     
-                    foreach (var rule in rulesToRemove)
-                    {
-                        security.RemoveAccessRule(rule);
-                    }
+                    security.SetAccessRule(usersBasicRule);
                     
+                    // RESTAURAR permisos de modificación/escritura a Usuarios autenticados
+                    var authUsersModifyWriteRule = new FileSystemAccessRule(
+                        authUsersAccount,
+                        FileSystemRights.Modify | FileSystemRights.Write,
+                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                        PropagationFlags.None,
+                        AccessControlType.Allow);
+                    
+                    security.SetAccessRule(authUsersModifyWriteRule);
+                    
+                    // Asegurar que Admins y SYSTEM mantienen control total
+                    var adminsAccount = (NTAccount)BUILTIN_ADMINS_SID.Translate(typeof(NTAccount));
+                    var systemAccount = (NTAccount)LOCAL_SYSTEM_SID.Translate(typeof(NTAccount));
+                    
+                    var adminsRule = new FileSystemAccessRule(
+                        adminsAccount,
+                        FileSystemRights.FullControl,
+                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                        PropagationFlags.None,
+                        AccessControlType.Allow);
+                    security.SetAccessRule(adminsRule);
+                    
+                    var systemRule = new FileSystemAccessRule(
+                        systemAccount,
+                        FileSystemRights.FullControl,
+                        InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                        PropagationFlags.None,
+                        AccessControlType.Allow);
+                    security.SetAccessRule(systemRule);
+                    
+                    // Aplicar cambios
                     directoryInfo.SetAccessControl(security);
+                    
                     progress?.Report("Desprotección completada exitosamente");
                     return true;
+                }
+                catch (UnauthorizedAccessException authEx)
+                {
+                    progress?.Report($"Error de permisos: {authEx.Message}");
+                    return false;
                 }
                 catch (Exception ex)
                 {
@@ -191,6 +333,22 @@ namespace DiskProtectorApp.Services
                     return false;
                 }
             });
+        }
+
+        private bool IsCurrentUserAdministrator()
+        {
+            try
+            {
+                var identity = WindowsIdentity.GetCurrent();
+                var principal = new WindowsPrincipal(identity);
+                bool isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
+                return isAdmin;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error verificando permisos de administrador: {ex.Message}");
+                return false;
+            }
         }
 
         private string FormatBytes(long bytes)

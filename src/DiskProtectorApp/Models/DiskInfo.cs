@@ -22,20 +22,10 @@ namespace DiskProtectorApp.Models
             get => _isSelected;
             set
             {
-                System.Diagnostics.Debug.WriteLine($"[DISK MODEL] Setting IsSelected for {DriveLetter}: {value}");
-                System.Console.WriteLine($"[DISK MODEL] Setting IsSelected for {DriveLetter}: {value}");
-                
                 if (_isSelectable && _isSelected != value)
                 {
                     _isSelected = value;
-                    System.Diagnostics.Debug.WriteLine($"[DISK MODEL] IsSelected CHANGED for {DriveLetter}: {value}");
-                    System.Console.WriteLine($"[DISK MODEL] IsSelected CHANGED for {DriveLetter}: {value}");
                     OnPropertyChanged();
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"[DISK MODEL] IsSelected NOT CHANGED for {DriveLetter}: old={_isSelected}, new={value}, selectable={_isSelectable}");
-                    System.Console.WriteLine($"[DISK MODEL] IsSelected NOT CHANGED for {DriveLetter}: old={_isSelected}, new={value}, selectable={_isSelectable}");
                 }
             }
         }
@@ -45,17 +35,11 @@ namespace DiskProtectorApp.Models
             get => _isSelectable;
             set
             {
-                System.Diagnostics.Debug.WriteLine($"[DISK MODEL] Setting IsSelectable for {DriveLetter}: {value}");
-                System.Console.WriteLine($"[DISK MODEL] Setting IsSelectable for {DriveLetter}: {value}");
-                
                 _isSelectable = value;
                 OnPropertyChanged();
-                
                 // Si no es seleccionable, deseleccionar
                 if (!value && _isSelected)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DISK MODEL] Deselecting non-selectable disk {DriveLetter}");
-                    System.Console.WriteLine($"[DISK MODEL] Deselecting non-selectable disk {DriveLetter}");
                     IsSelected = false;
                 }
             }
@@ -147,10 +131,8 @@ namespace DiskProtectorApp.Models
             set
             {
                 _isProtected = value;
-                ProtectionStatus = value ? "Protegido" : (_isSystemDisk ? "No Elegible" : "Desprotegido");
+                ProtectionStatus = value ? "Protegido" : "Desprotegido";
                 OnPropertyChanged();
-                System.Diagnostics.Debug.WriteLine($"[DISK MODEL] IsProtected changed for {DriveLetter}: {value}");
-                System.Console.WriteLine($"[DISK MODEL] IsProtected changed for {DriveLetter}: {value}");
             }
         }
 
@@ -158,8 +140,6 @@ namespace DiskProtectorApp.Models
 
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
-            System.Diagnostics.Debug.WriteLine($"[DISK MODEL] Property changed: {propertyName} on disk {DriveLetter}");
-            System.Console.WriteLine($"[DISK MODEL] Property changed: {propertyName} on disk {DriveLetter}");
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
