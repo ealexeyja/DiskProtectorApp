@@ -9,13 +9,13 @@
     <PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>false</SelfContained>
-    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
+    <ApplicationIcon>Resources/app.ico</ApplicationIcon>
     
     <!-- Configuración de versionado completa -->
-    <Version>1.2.7</Version>
-    <AssemblyVersion>1.2.7.0</AssemblyVersion>
-    <FileVersion>1.2.7.0</FileVersion>
-    <InformationalVersion>1.2.7</InformationalVersion>
+    <Version>1.2.6</Version>
+    <AssemblyVersion>1.2.6.0</AssemblyVersion>
+    <FileVersion>1.2.6.0</FileVersion>
+    <InformationalVersion>1.2.6</InformationalVersion>
     
     <!-- Propiedades adicionales para el ejecutable -->
     <Product>DiskProtectorApp</Product>
@@ -41,15 +41,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Resources\app.ico" />
-    <None Remove="Resources\shield-protected.png" />
-    <None Remove="Resources\shield-unprotected.png" />
+    <None Remove="Resources/app.ico" />
+    <None Remove="Resources/shield-protected.png" />
+    <None Remove="Resources/shield-unprotected.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Resources\app.ico" />
-    <Resource Include="Resources\shield-protected.png" />
-    <Resource Include="Resources\shield-unprotected.png" />
+    <Resource Include="Resources/app.ico" />
+    <Resource Include="Resources/shield-protected.png" />
+    <Resource Include="Resources/shield-unprotected.png" />
   </ItemGroup>
 
 </Project>
