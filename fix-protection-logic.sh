@@ -1,3 +1,9 @@
+#!/bin/bash
+
+echo "=== Corrigiendo lógica EXACTA de protección/desprotección ==="
+
+# Corregir DiskService.cs con la lógica EXACTA que especificaste
+cat > src/DiskProtectorApp/Services/DiskService.cs << 'DISKSERVICEEOF'
 using DiskProtectorApp.Models;
 using System;
 using System.Collections.Generic;
@@ -561,3 +567,17 @@ namespace DiskProtectorApp.Services
         }
     }
 }
+DISKSERVICEEOF
+
+echo "✅ DiskService.cs corregido con lógica EXACTA de protección"
+echo "   Cambios principales:"
+echo "   - Corregida la lógica de detección según tu definición EXACTA:"
+echo "     * Desprotegido: Usuarios TIENE permisos básicos Y AuthUsers TIENE modificación/escritura"
+echo "     * Protegido: Usuarios NO TIENE permisos (ni básicos) Y AuthUsers SOLO TIENE básicos"
+echo "   - Eliminados warnings CS0168 (variables 'ex' no usadas)"
+echo "   - Mantenida la estructura CORRECTA de .NET (todos los archivos en el mismo directorio)"
+echo "   - Implementado QUITAR/RESTAURAR permisos en lugar de usar Deny"
+echo "   - Agregado logging detallado en múltiples niveles"
+echo "   - Verificación previa de permisos de Admin/SYSTEM antes de operar"
+echo "   - Actualización automática del estado después de operaciones"
+echo "   - Mantenido control total para Administradores/SYSTEM siempre"

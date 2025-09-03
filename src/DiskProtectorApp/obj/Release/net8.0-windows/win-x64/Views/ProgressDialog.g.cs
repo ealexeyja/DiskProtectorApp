@@ -86,7 +86,7 @@ namespace DiskProtectorApp.Views {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/DiskProtectorApp;V1.2.6.0;component/views/progressdialog.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/DiskProtectorApp;V1.2.8.0;component/views/progressdialog.xaml", System.UriKind.Relative);
             
             #line 1 "../../../../../Views/ProgressDialog.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

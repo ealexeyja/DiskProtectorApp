@@ -1,4 +1,4 @@
-DiskProtectorApp v1.2.6
+DiskProtectorApp v1.2.8
 ========================
 
 ESTRUCTURA DE ARCHIVOS CORRECTA PARA .NET:
@@ -45,4 +45,4 @@ LOGS DE DIAGNÓSTICO:
 • %APPDATA%\DiskProtectorApp\app-debug.log
 • Niveles: INFO, DEBUG, WARN, ERROR, VERBOSE
 
- Versión actual: v1.2.6
+ Versión actual: v1.2.7

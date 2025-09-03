@@ -85,11 +85,11 @@ fi
 
 echo ""
 echo "🎉 ¡Workflow completado exitosamente!"
-echo "   Versión actual: v1.2.7"
+echo "   Versión actual: v1.2.8"
 echo "   Archivos generados:"
 echo "   - Carpeta organizada: DiskProtectorApp-final/"
 echo "   - Carpeta de publicación: publish-test/"
-echo "   - Archivo comprimido: DiskProtectorApp-v1.2.7.tar.gz"
+echo "   - Archivo comprimido: DiskProtectorApp-v1.2.8.tar.gz"
 echo ""
 echo "📊 Tamaño del archivo comprimido:"
-ls -lh DiskProtectorApp-v1.2.7.tar.gz
+ls -lh DiskProtectorApp-v1.2.8.tar.gz
