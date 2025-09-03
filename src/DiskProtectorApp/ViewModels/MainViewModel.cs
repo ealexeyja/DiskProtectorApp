@@ -61,25 +61,28 @@ namespace DiskProtectorApp.ViewModels
             _diskService = new DiskService();
             _logger = new OperationLogger();
             
-            ProtectCommand = new RelayCommand(async (parameter) => await ExecuteProtectDisksAsync(), CanAlwaysExecute);
-            UnprotectCommand = new RelayCommand(async (parameter) => await ExecuteUnprotectDisksAsync(), CanAlwaysExecute);
+            ProtectCommand = new RelayCommand(async (parameter) => await ExecuteProtectDisksAsync(), CanPerformProtectOperation);
+            UnprotectCommand = new RelayCommand(async (parameter) => await ExecuteUnprotectDisksAsync(), CanPerformUnprotectOperation);
             RefreshCommand = new RelayCommand(ExecuteRefreshDisks);
             
-            System.Diagnostics.Debug.WriteLine("[VIEWMODEL] MainViewModel initialized");
             RefreshDisks();
         }
 
         private void UpdateCommandStates()
         {
-            System.Diagnostics.Debug.WriteLine("[VIEWMODEL] Updating command states");
             CommandManager.InvalidateRequerySuggested();
         }
 
-        private bool CanAlwaysExecute(object? parameter)
+        private bool CanPerformProtectOperation(object? parameter)
         {
-            bool canExecute = !IsWorking;
-            System.Diagnostics.Debug.WriteLine($"[VIEWMODEL] CanAlwaysExecute: IsWorking={IsWorking}, Result={canExecute}");
-            return canExecute;
+            bool canProtect = !IsWorking && Disks.Any(d => d.IsSelected && d.IsSelectable && !d.IsProtected);
+            return canProtect;
+        }
+
+        private bool CanPerformUnprotectOperation(object? parameter)
+        {
+            bool canUnprotect = !IsWorking && Disks.Any(d => d.IsSelected && d.IsSelectable && d.IsProtected);
+            return canUnprotect;
         }
 
         private void ExecuteRefreshDisks(object? parameter)
@@ -108,7 +111,7 @@ namespace DiskProtectorApp.ViewModels
 
         private async Task ExecuteProtectDisksAsync()
         {
-            var selectedDisks = _disks?.Where(d => d.IsSelected && d.IsSelectable && !d.IsProtected).ToList() ?? new List<DiskInfo>();
+            var selectedDisks = Disks?.Where(d => d.IsSelected && d.IsSelectable && !d.IsProtected).ToList() ?? new List<DiskInfo>();
             if (!selectedDisks.Any()) return;
 
             IsWorking = true;
@@ -118,9 +121,14 @@ namespace DiskProtectorApp.ViewModels
             
             foreach (var disk in selectedDisks)
             {
-                bool success = await _diskService.ProtectDriveAsync(disk.DriveLetter ?? "", null);
+                var progress = new Progress<string>(message => {
+                    StatusMessage = message;
+                });
+                
+                bool success = await _diskService.ProtectDriveAsync(disk.DriveLetter ?? "", progress);
                 if (success)
                 {
+                    // ACTUALIZAR EL ESTADO INMEDIATAMENTE DESPUÉS DE LA OPERACIÓN
                     disk.IsProtected = true;
                     successCount++;
                     _logger.LogOperation("Proteger", disk.DriveLetter ?? "Desconocido", true);
@@ -134,12 +142,13 @@ namespace DiskProtectorApp.ViewModels
             StatusMessage = $"Protegidos {successCount} de {selectedDisks.Count} discos seleccionados";
             IsWorking = false;
             
+            // ACTUALIZAR INMEDIATAMENTE LOS ESTADOS DE LOS COMANDOS
             UpdateCommandStates();
         }
 
         private async Task ExecuteUnprotectDisksAsync()
         {
-            var selectedDisks = _disks?.Where(d => d.IsSelected && d.IsSelectable && d.IsProtected).ToList() ?? new List<DiskInfo>();
+            var selectedDisks = Disks?.Where(d => d.IsSelected && d.IsSelectable && d.IsProtected).ToList() ?? new List<DiskInfo>();
             if (!selectedDisks.Any()) return;
 
             IsWorking = true;
@@ -148,9 +157,14 @@ namespace DiskProtectorApp.ViewModels
             int successCount = 0;
             foreach (var disk in selectedDisks)
             {
-                bool success = await _diskService.UnprotectDriveAsync(disk.DriveLetter ?? "", null);
+                var progress = new Progress<string>(message => {
+                    StatusMessage = message;
+                });
+                
+                bool success = await _diskService.UnprotectDriveAsync(disk.DriveLetter ?? "", progress);
                 if (success)
                 {
+                    // ACTUALIZAR EL ESTADO INMEDIATAMENTE DESPUÉS DE LA OPERACIÓN
                     disk.IsProtected = false;
                     successCount++;
                     _logger.LogOperation("Desproteger", disk.DriveLetter ?? "Desconocido", true);
@@ -164,6 +178,7 @@ namespace DiskProtectorApp.ViewModels
             StatusMessage = $"Desprotegidos {successCount} de {selectedDisks.Count} discos seleccionados";
             IsWorking = false;
             
+            // ACTUALIZAR INMEDIATAMENTE LOS ESTADOS DE LOS COMANDOS
             UpdateCommandStates();
         }
 
