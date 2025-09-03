@@ -40,7 +40,7 @@ namespace DiskProtectorApp
                 // Crear y mostrar la ventana principal
                 LogMessage("Creating main window...");
                 var mainWindow = new DiskProtectorApp.Views.MainWindow();
-                LogMessage("Main window created successfully");
+                LogMessage("MainWindow constructor starting...");
                 
                 // Mostrar la ventana
                 mainWindow.Show();
@@ -65,7 +65,9 @@ namespace DiskProtectorApp
             {
                 var identity = WindowsIdentity.GetCurrent();
                 var principal = new WindowsPrincipal(identity);
-                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+                bool isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
+                LogMessage($"User is administrator: {isAdmin}");
+                return isAdmin;
             }
             catch (Exception ex)
             {
@@ -78,10 +80,18 @@ namespace DiskProtectorApp
         {
             try
             {
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                string logEntry = $"[{timestamp}] {message}";
+                
+                // Escribir en Debug
+                Debug.WriteLine(logEntry);
+                
+                // Escribir en Console
+                Console.WriteLine(logEntry);
+                
+                // Escribir en archivo de log
                 if (logPath != null)
                 {
-                    string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                    string logEntry = $"[{timestamp}] {message}";
                     File.AppendAllText(logPath, logEntry + Environment.NewLine);
                 }
             }
