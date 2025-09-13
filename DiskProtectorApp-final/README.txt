@@ -1,7 +1,7 @@
-DiskProtectorApp v1.2.8
+DiskProtectorApp v2.3.0
 ========================
 
-ESTRUCTURA DE ARCHIVOS CORRECTA PARA .NET:
+ESTRUCTURA DE ARCHIVOS:
 Todos los archivos (.exe, .dll, recursos) en el mismo directorio
 
 ├── DiskProtectorApp.exe     # Ejecutable principal
@@ -16,6 +16,7 @@ Todos los archivos (.exe, .dll, recursos) en el mismo directorio
 REQUISITOS DEL SISTEMA:
 - Windows 10/11 x64
 - Microsoft .NET 8.0 Desktop Runtime x64
+  Descargar desde: https://dotnet.microsoft.com/download/dotnet/8.0
 - Ejecutar como Administrador
 
 INSTRUCCIONES:
@@ -37,12 +38,13 @@ FUNCIONAMIENTO DE PERMISOS:
 
 REGISTRO DE OPERACIONES:
 • Todas las operaciones se registran en:
-• %APPDATA%\DiskProtectorApp\operations.log
+• %APPDATA%\DiskProtectorApp\Logs\operation.log
 • Se conservan los últimos 30 días de registros
 
 LOGS DE DIAGNÓSTICO:
 • Logs detallados en:
-• %APPDATA%\DiskProtectorApp\app-debug.log
-• Niveles: INFO, DEBUG, WARN, ERROR, VERBOSE
+• %APPDATA%\DiskProtectorApp\Logs\
+• Categorías: UI, ViewModel, Service, Operation, Permission
+• Niveles: DEBUG, INFO, WARN, ERROR, FATAL
 
  Versión actual: v1.2.7

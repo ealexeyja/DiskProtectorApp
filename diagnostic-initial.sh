@@ -43,10 +43,22 @@ echo "==============================="
 
 ESSENTIAL_FILES=(
     "src/DiskProtectorApp/DiskProtectorApp.csproj"
+    "src/DiskProtectorApp/App.xaml"
+    "src/DiskProtectorApp/App.xaml.cs"
+    "src/DiskProtectorApp/app.manifest"
+    "src/DiskProtectorApp/RelayCommand.cs"
+    "src/DiskProtectorApp/Controls/DiskStatusIndicator.xaml"
+    "src/DiskProtectorApp/Controls/DiskStatusIndicator.xaml.cs"
+    "src/DiskProtectorApp/Converters/DiskStatusToBrushConverter.cs"
+    "src/DiskProtectorApp/Logging/AppLogger.cs"
+    "src/DiskProtectorApp/Models/DiskInfo.cs"
+    "src/DiskProtectorApp/Resources/app.ico"
     "src/DiskProtectorApp/Services/DiskService.cs"
     "src/DiskProtectorApp/ViewModels/MainViewModel.cs"
     "src/DiskProtectorApp/Views/MainWindow.xaml"
-    "src/DiskProtectorApp/Models/DiskInfo.cs"
+    "src/DiskProtectorApp/Views/MainWindow.xaml.cs"
+    "src/DiskProtectorApp/Views/ProgressDialog.xaml"
+    "src/DiskProtectorApp/Views/ProgressDialog.xaml.cs"
 )
 
 for file in "${ESSENTIAL_FILES[@]}"; do

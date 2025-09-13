@@ -1,5 +1,5 @@
 ﻿DiskProtectorApp
-1.2.8.0
+2.3.0.0
 
 winexe
 C#
@@ -10,11 +10,11 @@ none
 false
 TRACE;RELEASE;NET;NET8_0;NETCOREAPP
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/App.xaml
-2-1007256196
+6311386579
 
-8-1625504645
+131422020758
 235343150770
-Views/MainWindow.xaml;Views/ProgressDialog.xaml;
+Controls/DiskStatusIndicator.xaml;Views/DetailedHelpWindow.xaml;Views/HelpWindow.xaml;Views/MainWindow.xaml;Views/MessageBoxWindow.xaml;Views/ProgressDialog.xaml;
 
 False
 

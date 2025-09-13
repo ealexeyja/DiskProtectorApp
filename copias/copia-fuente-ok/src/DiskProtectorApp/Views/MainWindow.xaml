@@ -1,0 +1,199 @@
+<controls:MetroWindow x:Class="DiskProtectorApp.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        mc:Ignorable="d"
+        Title="DiskProtectorApp v1.2.6" 
+        Height="600" Width="1000"
+        WindowStartupLocation="CenterScreen"
+        GlowBrush="{DynamicResource MahApps.Brushes.Accent}"
+        BorderThickness="1"
+        BorderBrush="{DynamicResource MahApps.Brushes.Accent}"
+        Background="{DynamicResource MahApps.Brushes.ThemeBackground}"
+        Foreground="{DynamicResource MahApps.Brushes.Text}"
+        Icon="pack://application:,,,/DiskProtectorApp;component/Resources/app.ico">
+    
+    <controls:MetroWindow.RightWindowCommands>
+        <controls:WindowCommands>
+            <Button Click="HelpButton_Click" ToolTip="Ayuda">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial Kind="HelpCircle" />
+                    <TextBlock Margin="4 0 0 0" VerticalAlignment="Center" Text="Ayuda" />
+                </StackPanel>
+            </Button>
+        </controls:WindowCommands>
+    </controls:MetroWindow.RightWindowCommands>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Barra de herramientas -->
+        <ToolBarTray Grid.Row="0">
+            <ToolBar Style="{StaticResource MahApps.Styles.ToolBar}">
+                <Button Command="{Binding RefreshCommand}" 
+                        ToolTip="Actualizar lista de discos">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Refresh" VerticalAlignment="Center"/>
+                        <TextBlock Margin="5,0,0,0" Text="Actualizar" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                
+                <Separator/>
+                
+                <Button Command="{Binding ProtectCommand}" 
+                        ToolTip="Proteger discos seleccionados">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="ShieldLock" VerticalAlignment="Center"/>
+                        <TextBlock Margin="5,0,0,0" Text="Proteger" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                
+                <Button Command="{Binding UnprotectCommand}" 
+                        ToolTip="Desproteger discos seleccionados">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="ShieldOff" VerticalAlignment="Center"/>
+                        <TextBlock Margin="5,0,0,0" Text="Desproteger" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                
+                <Separator/>
+                
+                <Button Command="{Binding AdminManageCommand}" 
+                        ToolTip="Administrar discos no seleccionables">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="ShieldAccount" VerticalAlignment="Center"/>
+                        <TextBlock Margin="5,0,0,0" Text="Administrar" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                
+                <Separator/>
+                
+                <Button Command="{Binding ExitCommand}" 
+                        ToolTip="Salir de la aplicación">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="ExitToApp" VerticalAlignment="Center"/>
+                        <TextBlock Margin="5,0,0,0" Text="Salir" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </ToolBar>
+        </ToolBarTray>
+
+        <!-- Información de discos seleccionados -->
+        <Border Grid.Row="1" 
+                Background="{DynamicResource MahApps.Brushes.Gray10}" 
+                Padding="10,5" 
+                BorderBrush="{DynamicResource MahApps.Brushes.Gray8}" 
+                BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding StatusMessage}" 
+                           VerticalAlignment="Center" 
+                           FontWeight="SemiBold"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Lista de discos -->
+        <DataGrid Grid.Row="2" 
+                  ItemsSource="{Binding Disks}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  CanUserReorderColumns="True"
+                  CanUserSortColumns="True"
+                  IsReadOnly="False"
+                  Margin="10"
+                  SelectionMode="Extended"
+                  GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="{DynamicResource MahApps.Brushes.Gray5}"
+                  VerticalGridLinesBrush="{DynamicResource MahApps.Brushes.Gray5}">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Seleccionar" Width="Auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" 
+                                      IsEnabled="{Binding IsSelectable}" 
+                                      HorizontalAlignment="Center" 
+                                      VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                
+                <DataGridTextColumn Header="Unidad" 
+                                    Binding="{Binding Name}" 
+                                    Width="Auto"/>
+                <DataGridTextColumn Header="Etiqueta" 
+                                    Binding="{Binding VolumeName}" 
+                                    Width="*"/>
+                <DataGridTextColumn Header="Tamaño Total" 
+                                    Binding="{Binding FormattedTotalSize}" 
+                                    Width="Auto"/>
+                <DataGridTextColumn Header="Espacio Libre" 
+                                    Binding="{Binding FormattedFreeSpace}" 
+                                    Width="Auto"/>
+                
+                <!-- Columna de Estado con Indicador de Color -->
+                <DataGridTemplateColumn Header="Estado" Width="Auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="12" Height="12" Margin="0,0,5,0">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <!-- Color por defecto: Gris para No Elegible -->
+                                            <Setter Property="Fill" Value="{DynamicResource MahApps.Brushes.Gray5}" />
+                                            <Style.Triggers>
+                                                <!-- Naranja para No Administrable -->
+                                                <DataTrigger Binding="{Binding IsManageable}" Value="False">
+                                                    <Setter Property="Fill" Value="{DynamicResource MahApps.Brushes.Accent}" />
+                                                </DataTrigger>
+                                                <!-- Verde para Protegido (solo si es elegible y administrable) -->
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding IsProtected}" Value="True" />
+                                                        <Condition Binding="{Binding IsEligible}" Value="True" />
+                                                        <Condition Binding="{Binding IsManageable}" Value="True" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Fill" Value="{DynamicResource MahApps.Brushes.Green}" />
+                                                </MultiDataTrigger>
+                                                <!-- Rojo para Desprotegido (solo si es elegible y administrable) -->
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding IsProtected}" Value="False" />
+                                                        <Condition Binding="{Binding IsEligible}" Value="True" />
+                                                        <Condition Binding="{Binding IsManageable}" Value="True" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Fill" Value="{DynamicResource MahApps.Brushes.Red}" />
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock Text="{Binding ProtectionStatus}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Barra de estado -->
+        <StatusBar Grid.Row="3">
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <controls:ProgressRing IsActive="{Binding IsWorking}" 
+                                          Width="16" Height="16" 
+                                          Margin="0,0,10,0"/>
+                    <TextBlock Text="{Binding StatusMessage}" 
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</controls:MetroWindow>

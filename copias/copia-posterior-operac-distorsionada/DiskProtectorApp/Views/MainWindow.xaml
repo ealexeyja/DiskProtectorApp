@@ -1,0 +1,121 @@
+<controls:MetroWindow x:Class="DiskProtectorApp.Views.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    xmlns:local="clr-namespace:DiskProtectorApp.Controls"
+    mc:Ignorable="d"
+    Title="DiskProtectorApp v1.2.6" 
+    Height="600" Width="1000" 
+    WindowStartupLocation="CenterScreen"
+    GlowBrush="{DynamicResource MahApps.Brushes.Accent}"
+    BorderThickness="1"
+    BorderBrush="{DynamicResource MahApps.Brushes.Accent}"
+    Background="{DynamicResource MahApps.Brushes.ThemeBackground}"
+    Foreground="{DynamicResource MahApps.Brushes.Text}"
+    Icon="pack://application:,,,/DiskProtectorApp;component/Resources/app.ico">
+    
+    <controls:MetroWindow.RightWindowCommands>
+        <controls:WindowCommands>
+            <Button Click="HelpButton_Click" ToolTip="Ayuda">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconMaterial Kind="HelpCircle" VerticalAlignment="Center"/>
+                    <TextBlock Margin="5,0,0,0" Text="Ayuda" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </controls:WindowCommands>
+    </controls:MetroWindow.RightWindowCommands>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Barra de herramientas -->
+        <ToolBarTray Grid.Row="0">
+            <ToolBar>
+                <Button Command="{Binding RefreshCommand}" ToolTip="Refrescar lista de discos">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="Refresh" VerticalAlignment="Center"/>
+                        <TextBlock Margin="5,0,0,0" Text="Refrescar" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Separator/>
+                <Button Command="{Binding ProtectCommand}" ToolTip="Proteger discos seleccionados">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="ShieldLock" VerticalAlignment="Center"/>
+                        <TextBlock Margin="5,0,0,0" Text="Proteger" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding UnprotectCommand}" ToolTip="Desproteger discos seleccionados">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="ShieldOff" VerticalAlignment="Center"/>
+                        <TextBlock Margin="5,0,0,0" Text="Desproteger" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Separator/>
+                <Button Command="{Binding ExitCommand}" ToolTip="Salir de la aplicación">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:PackIconMaterial Kind="ExitToApp" VerticalAlignment="Center"/>
+                        <TextBlock Margin="5,0,0,0" Text="Salir" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </ToolBar>
+        </ToolBarTray>
+
+        <!-- DataGrid de discos -->
+        <DataGrid Grid.Row="1" 
+                  ItemsSource="{Binding Disks}" 
+                  SelectedItem="{Binding SelectedDisk}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  SelectionMode="Single"
+                  SelectionUnit="FullRow"
+                  Margin="10">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Letra" Binding="{Binding DriveLetter}" Width="80"/>
+                <DataGridTextColumn Header="Nombre del volumen" Binding="{Binding VolumeName}" Width="150"/>
+                <DataGridTextColumn Header="Tamaño total" Binding="{Binding TotalSize}" Width="100"/>
+                <DataGridTextColumn Header="Espacio libre" Binding="{Binding FreeSpace}" Width="100"/>
+                <DataGridTemplateColumn Header="Estado" Width="120">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <local:DiskStatusIndicator Disk="{Binding}" Width="20" Height="20" Margin="0,0,5,0"/>
+                                <TextBlock Text="{Binding ProtectionStatus}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Administrable" Binding="{Binding IsManageable}" Width="100"/>
+                <DataGridTextColumn Header="Protegido" Binding="{Binding IsProtected}" Width="80"/>
+                <DataGridTextColumn Header="Seleccionable" Binding="{Binding IsSelectable}" Width="100"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Información de discos seleccionados -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource MahApps.Brushes.Gray10}"
+                Padding="10,5"
+                BorderBrush="{DynamicResource MahApps.Brushes.Gray8}"
+                BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding StatusMessage}" 
+                           VerticalAlignment="Center"
+                           FontWeight="SemiBold"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Barra de estado -->
+        <StatusBar Grid.Row="3">
+            <StatusBarItem>
+                <TextBlock Text="{Binding SelectedDisksInfo}"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</controls:MetroWindow>

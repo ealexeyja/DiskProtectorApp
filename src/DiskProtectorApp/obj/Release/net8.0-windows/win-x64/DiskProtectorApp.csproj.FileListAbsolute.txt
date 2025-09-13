@@ -61,3 +61,13 @@
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/bin/Release/net8.0-windows/win-x64/de/MahApps.Metro.resources.dll
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/Views/ProgressDialog.baml
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/Views/ProgressDialog.g.cs
+/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/GeneratedInternalTypeHelper.g.cs
+/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/DiskProtectorApp_MarkupCompile.lref
+/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/Controls/DiskStatusIndicator.baml
+/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/Controls/DiskStatusIndicator.g.cs
+/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/Views/HelpWindow.baml
+/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/Views/HelpWindow.g.cs
+/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/Views/MessageBoxWindow.baml
+/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/Views/MessageBoxWindow.g.cs
+/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/Views/DetailedHelpWindow.baml
+/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/Views/DetailedHelpWindow.g.cs

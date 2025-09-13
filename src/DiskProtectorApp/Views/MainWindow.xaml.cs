@@ -1,3 +1,4 @@
+using DiskProtectorApp.Logging;
 using DiskProtectorApp.ViewModels;
 using MahApps.Metro.Controls;
 using System;
@@ -10,116 +11,63 @@ namespace DiskProtectorApp.Views
 {
     public partial class MainWindow : MetroWindow
     {
-        private string logPath;
-
         public MainWindow()
         {
-            InitializeComponent();
-            
-            // Configurar logging
-            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string logDirectory = Path.Combine(appDataPath, "DiskProtectorApp");
-            Directory.CreateDirectory(logDirectory);
-            logPath = Path.Combine(logDirectory, "app-debug.log");
-            
-            LogMessage("MainWindow constructor starting...");
+            AppLogger.LogUI("Constructor de MainWindow iniciando...");
             
             try
             {
+                AppLogger.LogUI("Inicializando componente...");
+                InitializeComponent();
+                AppLogger.LogUI("Componente inicializado exitosamente");
+                
                 // Actualizar el título con la versión de la aplicación
                 var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
                 if (version != null)
                 {
                     this.Title = $"DiskProtectorApp v{version.Major}.{version.Minor}.{version.Build}";
+                    AppLogger.LogUI($"Título de ventana establecido a: {this.Title}");
                 }
                 
-                DataContext = new MainViewModel();
-                LogMessage("MainWindow initialized successfully");
+                AppLogger.LogUI("Creando MainViewModel...");
+                var viewModel = new MainViewModel();
+                AppLogger.LogUI("MainViewModel creado exitosamente");
+                
+                DataContext = viewModel;
+                AppLogger.LogUI("DataContext establecido exitosamente");
+                AppLogger.LogUI("MainWindow inicializada exitosamente");
             }
             catch (Exception ex)
             {
-                LogMessage($"Error initializing MainWindow: {ex}");
-                MessageBox.Show($"Error al inicializar la ventana principal:\n{ex.Message}\n\n{ex.StackTrace}", 
-                                "Error de inicialización", 
-                                MessageBoxButton.OK, 
-                                MessageBoxImage.Error);
+                AppLogger.Fatal("UI", "Error inicializando MainWindow", ex);
+                MessageBox.Show($"Error crítico al inicializar la ventana principal:\n{ex.Message}\n\nDetalles:\n{ex}\n\nLa aplicación se cerrará.",
+                              "Error de inicialización",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Error);
+                
+                // Intentar cerrar la aplicación si estamos en el contexto correcto
+                try 
+                {
+                    Application.Current?.Shutdown();
+                }
+                catch { /* Ignorar errores al intentar cerrar */ }
             }
         }
 
         private void HelpButton_Click(object sender, RoutedEventArgs e)
         {
-            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-            string versionText = version != null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "v1.2.6";
+            AppLogger.LogUI("Botón de ayuda clickeado");
             
-            var helpText = $@"INFORMACIÓN DEL DESARROLLADOR:
-- Nombre: Emigdio Alexey Jimenez Acosta
-- Email: ealexeyja@gmail.com
-- Teléfono: +53 5586 0259
-
-DESCRIPCIÓN:
-Aplicación para protección de discos mediante gestión de permisos NTFS.
-
-⚠️ REQUISITOS TÉCNICOS:
-
-🔷 EJECUCIÓN COMO ADMINISTRADOR:
-• La aplicación DEBE ejecutarse con privilegios de administrador
-• Click derecho → ""Ejecutar como administrador""
-
-🔷 RUNTIME NECESARIO:
-• Microsoft .NET 8.0 Desktop Runtime x64
-• Descargar desde: https://dotnet.microsoft.com/download/dotnet/8.0  
-
-🔷 SISTEMA OPERATIVO:
-• Windows 10/11 x64
-• Sistema de archivos NTFS
-
-INSTRUCCIONES DE USO:
-1. Ejecutar la aplicación como Administrador
-2. Seleccionar los discos a proteger/desproteger
-3. Click en el botón correspondiente
-4. Esperar confirmación de la operación
-
-📝 REGISTRO DE OPERACIONES:
-• Todas las operaciones se registran en:
-• %APPDATA%\DiskProtectorApp\operations.log
-• Se conservan los últimos 30 días de registros
-
-LOGS DE DIAGNÓSTICO:
-• Logs detallados en:
-• %APPDATA%\DiskProtectorApp\app-debug.log
-• Niveles: INFO, DEBUG, WARN, ERROR, VERBOSE
-
- Versión actual: {versionText}";
-
-            MessageBox.Show(helpText, "Ayuda de DiskProtectorApp", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void LogMessage(string message)
-        {
-            try
-            {
-                string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                string logEntry = $"[{timestamp}] {message}";
-                
-                // Escribir en Debug
-                Debug.WriteLine(logEntry);
-                
-                // Escribir en Console
-                Console.WriteLine(logEntry);
-                
-                // Escribir en archivo de log
-                File.AppendAllText(logPath, logEntry + Environment.NewLine);
-            }
-            catch
-            {
-                // Silenciar errores de logging
-            }
+            // Crear y mostrar la ventana de ayuda detallada
+            var detailedHelpWindow = new DetailedHelpWindow();
+            detailedHelpWindow.Owner = this;
+            detailedHelpWindow.ShowDialog();
         }
 
         protected override void OnContentRendered(EventArgs e)
         {
             base.OnContentRendered(e);
-            LogMessage("MainWindow content rendered");
+            AppLogger.LogUI("Contenido de MainWindow renderizado");
         }
     }
 }
