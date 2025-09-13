@@ -13,14 +13,20 @@ if [ ! -f "src/DiskProtectorApp/DiskProtectorApp.csproj" ]; then
     exit 1
 fi
 
-# Verificar que existe el archivo comprimido
+# Obtener la versión actual del proyecto
 CURRENT_VERSION=$(grep -oPm1 "(?<=<Version>)[^<]+" src/DiskProtectorApp/DiskProtectorApp.csproj)
 if [ -z "$CURRENT_VERSION" ]; then
+    echo "⚠️  Advertencia: No se pudo leer la versión actual del .csproj. Usando 0.0.0 como base."
     CURRENT_VERSION="0.0.0"
 fi
 
+echo "📦 Versión actual: v$CURRENT_VERSION"
+
+# Verificar que existe el archivo comprimido
 ARCHIVE_NAME="DiskProtectorApp-v$CURRENT_VERSION-portable.tar.gz"
 ZIP_NAME="DiskProtectorApp-v$CURRENT_VERSION-portable.zip"
+INSTALLER_NAME="DiskProtectorApp-v$CURRENT_VERSION-installer.msi"
+BOOTSTRAPPER_NAME="DiskProtectorApp-v$CURRENT_VERSION-bootstrapper.exe"
 
 if [ ! -f "$ARCHIVE_NAME" ]; then
     echo "❌ Error: No se encontró el archivo comprimido ($ARCHIVE_NAME)."
@@ -28,7 +34,33 @@ if [ ! -f "$ARCHIVE_NAME" ]; then
     exit 1
 fi
 
-echo "📦 Versión actual: v$CURRENT_VERSION"
+echo "🔍 Verificando archivos para publicar..."
+FILES_TO_PUBLISH=()
+
+if [ -f "$ARCHIVE_NAME" ]; then
+    FILES_TO_PUBLISH+=("$ARCHIVE_NAME")
+    echo "✅ Archivo TAR.GZ encontrado: $ARCHIVE_NAME"
+fi
+
+if [ -f "$ZIP_NAME" ]; then
+    FILES_TO_PUBLISH+=("$ZIP_NAME")
+    echo "✅ Archivo ZIP encontrado: $ZIP_NAME"
+fi
+
+if [ -f "$INSTALLER_NAME" ]; then
+    FILES_TO_PUBLISH+=("$INSTALLER_NAME")
+    echo "✅ Instalador MSI encontrado: $INSTALLER_NAME"
+fi
+
+if [ -f "$BOOTSTRAPPER_NAME" ]; then
+    FILES_TO_PUBLISH+=("$BOOTSTRAPPER_NAME")
+    echo "✅ Bootstrapper EXE encontrado: $BOOTSTRAPPER_NAME"
+fi
+
+if [ ${#FILES_TO_PUBLISH[@]} -eq 0 ]; then
+    echo "❌ Error: No se encontraron archivos para publicar."
+    exit 1
+fi
 
 # Verificar que git está disponible
 if ! command -v git &> /dev/null; then
@@ -105,8 +137,12 @@ echo "   2. Busca el workflow CI/CD Pipeline"
 echo "   3. Verifica que se esté ejecutando"
 echo ""
 echo "📦 Archivos que se publicarán como assets del release:"
-echo "   - $ARCHIVE_NAME"
-if [ -f "$ZIP_NAME" ]; then
-    echo "   - $ZIP_NAME"
-fi
+for file in "${FILES_TO_PUBLISH[@]}"; do
+    echo "   - $file"
+done
+
+# Notificar que los archivos se adjuntarán automáticamente al release por GitHub Actions
+echo ""
+echo "ℹ️  Nota: Los archivos se adjuntarán automáticamente al release"
+echo "   por el workflow de GitHub Actions cuando se cree el tag."
 

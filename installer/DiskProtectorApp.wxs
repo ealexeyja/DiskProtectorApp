@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:bal="http://schemas.microsoft.com/wix/BalExtension"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+  
+  <!-- Definir variables del producto -->
+  <?define ProductName = "DiskProtectorApp"?>
+  <?define Manufacturer = "Emigdio Alexey Jimenez Acosta"?>
+  <?define ProductVersion = "$(env.APP_VERSION)"?>
+  <?define ProductCode = "*"?> <!-- Generar GUID automáticamente -->
+  <?define UpgradeCode = "12345678-1234-1234-1234-123456789012"?> <!-- Cambiar este GUID para tu proyecto -->
+  
+  <!-- Producto principal -->
+  <Product Id="$(var.ProductCode)" 
+           Name="$(var.ProductName) v$(var.ProductVersion)" 
+           Language="1033" 
+           Version="$(var.ProductVersion)" 
+           Manufacturer="$(var.Manufacturer)" 
+           UpgradeCode="$(var.UpgradeCode)">
+    
+    <!-- Paquete de instalación -->
+    <Package InstallerVersion="500" 
+             Compressed="yes" 
+             InstallScope="perMachine"
+             Platform="x64"
+             Manufacturer="$(var.Manufacturer)"
+             Description="Instalador de $(var.ProductName) v$(var.ProductVersion)"
+             Keywords="Disk, Protector, NTFS, Permissions"
+             Comments="Aplicación para protección de discos mediante gestión de permisos NTFS">
+      
+      <!-- Propiedades del instalador -->
+      <MediaTemplate EmbedCab="yes" />
+      
+      <!-- Icono de la aplicación -->
+      <Icon Id="app.ico" SourceFile="src/DiskProtectorApp/Resources/app.ico"/>
+      <Property Id="ARPPRODUCTICON" Value="app.ico" />
+      
+      <!-- Información del fabricante -->
+      <Property Id="ARPHELPLINK" Value="https://github.com/ealexeyja/DiskProtectorApp" />
+      <Property Id="ARPURLINFOABOUT" Value="https://github.com/ealexeyja/DiskProtectorApp" />
+      <Property Id="ARPCONTACT" Value="ealexeyja@gmail.com" />
+      
+      <!-- Condición para requerir Windows 10/11 x64 -->
+      <Condition Message="Este instalador requiere Windows 10 o superior de 64 bits.">
+        <![CDATA[Installed OR (VersionNT64 >= 603)]]>
+      </Condition>
+      
+      <!-- Directorio de instalación principal -->
+      <Directory Id="TARGETDIR" Name="SourceDir">
+        <Directory Id="ProgramFiles64Folder">
+          <Directory Id="INSTALLFOLDER" Name="$(var.ProductName)">
+            <!-- Componente principal de la aplicación -->
+            <Component Id="MainExecutable" Guid="*">
+              <File Id="DiskProtectorApp.exe" 
+                    Source="publish-v$(var.ProductVersion)/DiskProtectorApp.exe" 
+                    KeyPath="yes">
+                <!-- Acceso directo en el menú de inicio -->
+                <Shortcut Id="StartMenuShortcut" 
+                          Directory="ProgramMenuFolder" 
+                          Name="$(var.ProductName)" 
+                          WorkingDirectory="INSTALLFOLDER"
+                          Icon="app.ico" />
+              </File>
+            </Component>
+            
+            <!-- Componentes adicionales de la aplicación -->
+            <Component Id="AppConfig" Guid="*">
+              <File Id="AppConfig" 
+                    Source="publish-v$(var.ProductVersion)/DiskProtectorApp.exe.config" 
+                    KeyPath="yes" />
+            </Component>
+            
+            <!-- DLLs y recursos de la aplicación -->
+            <Component Id="AppLibraries" Guid="*">
+              <File Id="MahAppsMetroDll" 
+                    Source="publish-v$(var.ProductVersion)/MahApps.Metro.dll" 
+                    KeyPath="no" />
+              <File Id="MahAppsMetroIconPacksDll" 
+                    Source="publish-v$(var.ProductVersion)/MahApps.Metro.IconPacks.dll" 
+                    KeyPath="no" />
+              <File Id="ControlzExDll" 
+                    Source="publish-v$(var.ProductVersion)/ControlzEx.dll" 
+                    KeyPath="no" />
+              <File Id="MicrosoftXamlBehaviorsDll" 
+                    Source="publish-v$(var.ProductVersion)/Microsoft.Xaml.Behaviors.dll" 
+                    KeyPath="no" />
+              <File Id="SystemManagementDll" 
+                    Source="publish-v$(var.ProductVersion)/System.Management.dll" 
+                    KeyPath="no" />
+            </Component>
+            
+            <!-- Recursos localizados -->
+            <Directory Id="enFolder" Name="en">
+              <Component Id="EnglishResources" Guid="*">
+                <File Id="EnglishResourcesDll" 
+                      Source="publish-v$(var.ProductVersion)/en/DiskProtectorApp.resources.dll" 
+                      KeyPath="yes" />
+              </Component>
+            </Directory>
+            
+            <Directory Id="esFolder" Name="es">
+              <Component Id="SpanishResources" Guid="*">
+                <File Id="SpanishResourcesDll" 
+                      Source="publish-v$(var.ProductVersion)/es/DiskProtectorApp.resources.dll" 
+                      KeyPath="yes" />
+              </Component>
+            </Directory>
+          </Directory>
+        </Directory>
+        
+        <!-- Menú de inicio -->
+        <Directory Id="ProgramMenuFolder">
+          <Directory Id="ApplicationProgramsFolder" Name="$(var.ProductName)"/>
+        </Directory>
+      </Directory>
+      
+      <!-- Componentes fuera del directorio principal -->
+      <DirectoryRef Id="ApplicationProgramsFolder">
+        <Component Id="ApplicationShortcut" Guid="*">
+          <Shortcut Id="ApplicationStartMenuShortcut" 
+                    Name="$(var.ProductName)" 
+                    Description="Aplicación para protección de discos NTFS"
+                    Target="[INSTALLFOLDER]DiskProtectorApp.exe"
+                    WorkingDirectory="INSTALLFOLDER"
+                    Icon="app.ico" />
+          <RemoveFolder Id="CleanUpShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
+          <RegistryValue Root="HKCU" Key="Software\$(var.Manufacturer)\$(var.ProductName)" 
+                         Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+        </Component>
+      </DirectoryRef>
+      
+      <!-- Verificación de requisitos previos -->
+      <Property Id="NETFRAMEWORK80">
+        <RegistrySearch Id="NetFx80" 
+                        Root="HKLM" 
+                        Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v8.0\Full\" 
+                        Name="Release" 
+                        Type="raw" />
+      </Property>
+      
+      <!-- Condición para requerir .NET 8.0 -->
+      <Condition Message="Este instalador requiere Microsoft .NET 8.0 Desktop Runtime. Por favor, descárguelo e instálelo desde https://dotnet.microsoft.com/download/dotnet/8.0">
+        <![CDATA[Installed OR NETFRAMEWORK80]]>
+      </Condition>
+      
+      <!-- Secuencias de instalación -->
+      <Feature Id="MainApplication" Title="DiskProtectorApp" Level="1">
+        <ComponentRef Id="MainExecutable" />
+        <ComponentRef Id="AppConfig" />
+        <ComponentRef Id="AppLibraries" />
+        <ComponentRef Id="EnglishResources" />
+        <ComponentRef Id="SpanishResources" />
+        <ComponentRef Id="ApplicationShortcut" />
+      </Feature>
+      
+      <!-- Diálogo de bienvenida y finalización personalizado -->
+      <UI>
+        <UIRef Id="WixUI_InstallDir" />
+        <Publish Dialog="WelcomeDlg" 
+                 Control="Next" 
+                 Event="NewDialog" 
+                 Value="InstallDirDlg" 
+                 Order="2">1</Publish>
+        <Publish Dialog="InstallDirDlg" 
+                 Control="Back" 
+                 Event="NewDialog" 
+                 Value="WelcomeDlg" 
+                 Order="2">1</Publish>
+      </UI>
+      
+      <!-- Personalizar el texto del instalador -->
+      <WixVariable Id="WixUILicenseRtf" Value="installer/license.rtf" />
+      <WixVariable Id="WixUIBannerBmp" Value="installer/banner.bmp" />
+      <WixVariable Id="WixUIDialogBmp" Value="installer/dialog.bmp" />
+      
+      <!-- Acciones personalizadas -->
+      <CustomAction Id="LaunchApplication" 
+                    FileKey="DiskProtectorApp.exe" 
+                    ExeCommand="" 
+                    Execute="immediate" 
+                    Impersonate="yes" 
+                    Return="asyncNoWait" />
+      
+      <!-- Secuencia de acciones al finalizar -->
+      <InstallExecuteSequence>
+        <Custom Action="LaunchApplication" After="InstallFinalize">NOT Installed AND UILevel < 4</Custom>
+      </InstallExecuteSequence>
+    </Package>
+  </Product>
+</Wix>

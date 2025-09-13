@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "gkpgjDQVkYc=",
+  "dgSpecHash": "aK7CjFQctVc=",
   "success": true,
   "projectFilePath": "/workspaces/DiskProtectorApp/src/DiskProtectorApp/DiskProtectorApp.csproj",
   "expectedPackageFiles": [
@@ -11,8 +11,8 @@
     "/home/codespace/.nuget/packages/system.codedom/8.0.0/system.codedom.8.0.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/system.management/8.0.0/system.management.8.0.0.nupkg.sha512",
     "/home/codespace/.nuget/packages/system.text.json/5.0.1/system.text.json.5.0.1.nupkg.sha512",
-    "/home/codespace/.nuget/packages/microsoft.windowsdesktop.app.ref/8.0.18/microsoft.windowsdesktop.app.ref.8.0.18.nupkg.sha512",
-    "/home/codespace/.nuget/packages/microsoft.netcore.app.host.win-x64/8.0.18/microsoft.netcore.app.host.win-x64.8.0.18.nupkg.sha512"
+    "/home/codespace/.nuget/packages/microsoft.windowsdesktop.app.ref/8.0.20/microsoft.windowsdesktop.app.ref.8.0.20.nupkg.sha512",
+    "/home/codespace/.nuget/packages/microsoft.netcore.app.host.win-x64/8.0.20/microsoft.netcore.app.host.win-x64.8.0.20.nupkg.sha512"
   ],
   "logs": []
 }
