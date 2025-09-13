@@ -1,7 +1,7 @@
 DiskProtectorApp v2.3.0
 ========================
 
-ESTRUCTURA DE ARCHIVOS:
+ESTRUCTURA DE ARCHIVOS CORRECTA PARA .NET:
 Todos los archivos (.exe, .dll, recursos) en el mismo directorio
 
 ├── DiskProtectorApp.exe     # Ejecutable principal
@@ -16,7 +16,6 @@ Todos los archivos (.exe, .dll, recursos) en el mismo directorio
 REQUISITOS DEL SISTEMA:
 - Windows 10/11 x64
 - Microsoft .NET 8.0 Desktop Runtime x64
-  Descargar desde: https://dotnet.microsoft.com/download/dotnet/8.0
 - Ejecutar como Administrador
 
 INSTRUCCIONES:
@@ -28,18 +27,18 @@ INSTRUCCIONES:
 FUNCIONAMIENTO DE PERMISOS:
 • DISCO DESPROTEGIDO (NORMAL):
   - Grupo "Usuarios" tiene permisos básicos: Lectura y ejecución, Mostrar contenido de carpeta, Lectura
-  - Grupo "Usuarios autenticados" tiene permisos de modificación/escritura
+  - Grupo "Usuarios autenticados" tiene permisos de modificación/escritura (M, W, F)
   - Grupo "Administradores" y "SYSTEM" tienen Control Total (siempre)
 
 • DISCO PROTEGIDO:
   - Grupo "Usuarios" NO tiene permisos establecidos
-  - Grupo "Usuarios autenticados" solo tiene permisos básicos: Lectura y ejecución, Mostrar contenido de carpeta, Lectura
+  - Grupo "Usuarios autenticados" solo tiene permisos básicos de lectura/ejecución (RX)
   - Grupo "Administradores" y "SYSTEM" mantienen Control Total (siempre)
 
 REGISTRO DE OPERACIONES:
 • Todas las operaciones se registran en:
 • %APPDATA%\DiskProtectorApp\Logs\operation.log
-• Se conservan los últimos 30 días de registros
+• Se conservan los últimos registros por 30 días
 
 LOGS DE DIAGNÓSTICO:
 • Logs detallados en:
