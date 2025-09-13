@@ -70,3 +70,4 @@
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/Views/MessageBoxWindow.g.cs
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/Views/DetailedHelpWindow.baml
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/Views/DetailedHelpWindow.g.cs
+/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/DiskProtectorApp.sourcelink.json
