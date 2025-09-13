@@ -89,13 +89,21 @@ echo "📊 Tamaño de los archivos generados:"
 ls -lh DiskProtectorApp-v$CURRENT_VERSION*
 
 echo ""
-echo "�� Siguientes pasos:"
-echo "   1. Para publicar en GitHub:"
-echo "      - git add ."
-echo "      - git commit -m \"release: v$CURRENT_VERSION\""
-echo "      - git push origin main"
-echo "      - git tag -a \"v$CURRENT_VERSION\" -m \"Release v$CURRENT_VERSION\""
-echo "      - git push origin \"v$CURRENT_VERSION\""
+echo "�� ¿Deseas publicar esta versión en GitHub ahora? (s/n)"
+read -p "   Esta acción incluye crear commit (si hay cambios), tag y subir a GitHub: " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Ss]$ ]]; then
+    if [ -f "./publish-to-github.sh" ]; then
+        ./publish-to-github.sh
+    else
+        echo "❌ No se encontró el script publish-to-github.sh"
+        echo "   Puedes ejecutarlo manualmente después con: ./publish-to-github.sh"
+    fi
+else
+    echo "💡 Puedes publicar en GitHub más tarde ejecutando: ./publish-to-github.sh"
+fi
+
 echo ""
-echo "   2. Crear un nuevo release en GitHub con los archivos generados"
+echo "🎉 ¡Proceso de release completado exitosamente!"
+echo "   Versión final: v$CURRENT_VERSION"
 
