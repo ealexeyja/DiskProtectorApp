@@ -9,7 +9,6 @@
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/DiskProtectorApp.AssemblyInfoInputs.cache
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/DiskProtectorApp.AssemblyInfo.cs
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/DiskProtectorApp.csproj.CoreCompileInputs.cache
-/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/DiskProtectorApp.sourcelink.json
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/bin/Release/net8.0-windows/win-x64/DiskProtectorApp.exe
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/bin/Release/net8.0-windows/win-x64/DiskProtectorApp.deps.json
 /workspaces/DiskProtectorApp/src/DiskProtectorApp/bin/Release/net8.0-windows/win-x64/DiskProtectorApp.runtimeconfig.json
