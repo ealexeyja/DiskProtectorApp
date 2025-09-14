@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/Release/net8.0-windows/win-x64/
+D:\_DEV\_PROYECTOS\DiskProtectorApp\src\DiskProtectorApp\obj\Release\net8.0-windows\win-x64\
 DiskProtectorApp
 none
 false
 TRACE;RELEASE;NET;NET8_0;NETCOREAPP
-/workspaces/DiskProtectorApp/src/DiskProtectorApp/App.xaml
-6311386579
+D:\_DEV\_PROYECTOS\DiskProtectorApp\src\DiskProtectorApp\App.xaml
+6177913739
 
-131422020758
-2351415477870
-Controls/DiskStatusIndicator.xaml;Views/DetailedHelpWindow.xaml;Views/HelpWindow.xaml;Views/MainWindow.xaml;Views/MessageBoxWindow.xaml;Views/ProgressDialog.xaml;
+13-1783039469
+235993993658
+Controls\DiskStatusIndicator.xaml;Views\DetailedHelpWindow.xaml;Views\HelpWindow.xaml;Views\MainWindow.xaml;Views\MessageBoxWindow.xaml;Views\ProgressDialog.xaml;
 
 False
 

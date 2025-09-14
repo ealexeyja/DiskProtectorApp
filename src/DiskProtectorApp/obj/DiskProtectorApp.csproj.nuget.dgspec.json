@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/workspaces/DiskProtectorApp/src/DiskProtectorApp/DiskProtectorApp.csproj": {}
+    "D:\\_DEV\\_PROYECTOS\\DiskProtectorApp\\src\\DiskProtectorApp\\DiskProtectorApp.csproj": {}
   },
   "projects": {
-    "/workspaces/DiskProtectorApp/src/DiskProtectorApp/DiskProtectorApp.csproj": {
+    "D:\\_DEV\\_PROYECTOS\\DiskProtectorApp\\src\\DiskProtectorApp\\DiskProtectorApp.csproj": {
       "version": "2.3.0",
       "restore": {
-        "projectUniqueName": "/workspaces/DiskProtectorApp/src/DiskProtectorApp/DiskProtectorApp.csproj",
+        "projectUniqueName": "D:\\_DEV\\_PROYECTOS\\DiskProtectorApp\\src\\DiskProtectorApp\\DiskProtectorApp.csproj",
         "projectName": "DiskProtectorApp",
-        "projectPath": "/workspaces/DiskProtectorApp/src/DiskProtectorApp/DiskProtectorApp.csproj",
-        "packagesPath": "/home/codespace/.nuget/packages/",
-        "outputPath": "/workspaces/DiskProtectorApp/src/DiskProtectorApp/obj/",
+        "projectPath": "D:\\_DEV\\_PROYECTOS\\DiskProtectorApp\\src\\DiskProtectorApp\\DiskProtectorApp.csproj",
+        "packagesPath": "C:\\Users\\XF\\.nuget\\packages\\",
+        "outputPath": "D:\\_DEV\\_PROYECTOS\\DiskProtectorApp\\src\\DiskProtectorApp\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/codespace/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\XF\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0-windows"
@@ -75,16 +75,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[8.0.20, 8.0.20]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.20, 8.0.20]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
@@ -93,7 +83,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/8.0.414/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.414/PortableRuntimeIdentifierGraph.json"
         }
       },
       "runtimes": {

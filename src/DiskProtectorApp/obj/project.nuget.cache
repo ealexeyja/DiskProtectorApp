@@ -1,18 +1,16 @@
 {
   "version": 2,
-  "dgSpecHash": "aK7CjFQctVc=",
+  "dgSpecHash": "OqoOyR6PMQU=",
   "success": true,
-  "projectFilePath": "/workspaces/DiskProtectorApp/src/DiskProtectorApp/DiskProtectorApp.csproj",
+  "projectFilePath": "D:\\_DEV\\_PROYECTOS\\DiskProtectorApp\\src\\DiskProtectorApp\\DiskProtectorApp.csproj",
   "expectedPackageFiles": [
-    "/home/codespace/.nuget/packages/controlzex/5.0.2/controlzex.5.0.2.nupkg.sha512",
-    "/home/codespace/.nuget/packages/mahapps.metro/2.4.10/mahapps.metro.2.4.10.nupkg.sha512",
-    "/home/codespace/.nuget/packages/mahapps.metro.iconpacks/4.11.0/mahapps.metro.iconpacks.4.11.0.nupkg.sha512",
-    "/home/codespace/.nuget/packages/microsoft.xaml.behaviors.wpf/1.1.77/microsoft.xaml.behaviors.wpf.1.1.77.nupkg.sha512",
-    "/home/codespace/.nuget/packages/system.codedom/8.0.0/system.codedom.8.0.0.nupkg.sha512",
-    "/home/codespace/.nuget/packages/system.management/8.0.0/system.management.8.0.0.nupkg.sha512",
-    "/home/codespace/.nuget/packages/system.text.json/5.0.1/system.text.json.5.0.1.nupkg.sha512",
-    "/home/codespace/.nuget/packages/microsoft.windowsdesktop.app.ref/8.0.20/microsoft.windowsdesktop.app.ref.8.0.20.nupkg.sha512",
-    "/home/codespace/.nuget/packages/microsoft.netcore.app.host.win-x64/8.0.20/microsoft.netcore.app.host.win-x64.8.0.20.nupkg.sha512"
+    "C:\\Users\\XF\\.nuget\\packages\\controlzex\\5.0.2\\controlzex.5.0.2.nupkg.sha512",
+    "C:\\Users\\XF\\.nuget\\packages\\mahapps.metro\\2.4.10\\mahapps.metro.2.4.10.nupkg.sha512",
+    "C:\\Users\\XF\\.nuget\\packages\\mahapps.metro.iconpacks\\4.11.0\\mahapps.metro.iconpacks.4.11.0.nupkg.sha512",
+    "C:\\Users\\XF\\.nuget\\packages\\microsoft.xaml.behaviors.wpf\\1.1.77\\microsoft.xaml.behaviors.wpf.1.1.77.nupkg.sha512",
+    "C:\\Users\\XF\\.nuget\\packages\\system.codedom\\8.0.0\\system.codedom.8.0.0.nupkg.sha512",
+    "C:\\Users\\XF\\.nuget\\packages\\system.management\\8.0.0\\system.management.8.0.0.nupkg.sha512",
+    "C:\\Users\\XF\\.nuget\\packages\\system.text.json\\5.0.1\\system.text.json.5.0.1.nupkg.sha512"
   ],
   "logs": []
 }
