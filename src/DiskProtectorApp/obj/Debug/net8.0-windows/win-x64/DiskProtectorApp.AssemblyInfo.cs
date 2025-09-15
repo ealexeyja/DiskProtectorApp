@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyCopyrightAttribute("Copyright © Emigdio Alexey Jimenez Acosta 2024")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("2.3.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.3.0+87a80da30490a717343116dc3c17b0063ca11892")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.3.0+f7f01b8a63330fc58786905e173b1a9815d062ea")]
 [assembly: System.Reflection.AssemblyProductAttribute("DiskProtectorApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Disk Protector Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("2.3.0.0")]
